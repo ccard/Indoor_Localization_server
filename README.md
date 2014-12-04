@@ -28,7 +28,7 @@ turned on:
 
 ## VS Project Setup ##
 &nbsp;&nbsp;&nbsp;This section describes how to setup the project in Visual Studio&reg; so that it will compile.
- - First Create a new Project in the solution
+ - First Create a new Project in the solution named *Localization_CodeRedizine*
  - Then add all the files to the solution
  - Then open the project properties and set the properties appropriatly
 
