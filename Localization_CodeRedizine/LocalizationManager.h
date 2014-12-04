@@ -65,17 +65,16 @@ public:
 	void performVideoTesting(string vFile){
 
 	}
-#endif
 
-#if DEBUG && is_same<MyMat,ImgType>::value
-#define _DEBUGPROGRAM
+#if INSPECT
 	void evaluateMatches(string imageFile){
 
 	}
 
-	void evaluateMatches(ImageProvider<ImgType> images){
+	void evaluateMatches(ImgProviderType &images){
 
 	}
+#endif
 #endif
 private:
 	ImageProvider<ImgType> *db;

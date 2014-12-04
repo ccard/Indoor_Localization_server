@@ -68,19 +68,7 @@ private:
 #if DEBUG
 			size+=kps.size();
 #endif
-#if is_same<ImType,DBImage>::value
-
-			ret.push_back(DBImage(img_file,des,kps));
-
-#elif is_same<ImType,MyMat>::value
-
-			ret.push_back(MyMat(img_file,des,kps));
-
-#else
-
-			ASSERT(false,"Incompatible "<<"types");
-
-#endif
+			ret.push_back(ImType(img_file,des,kps));
 		}
 		in.close();
 #if DEBUG
