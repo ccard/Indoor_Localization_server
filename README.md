@@ -5,10 +5,12 @@ Indoor Localization DB server
 
 # Topics #
  - [Environment](#environment)
+ - [Compilation](#compilation)
+ - [Program Parts](#program_parts)
 
 
 ---------------
-# Environement #
+# Environment #
 &nbsp;&nbsp;This section describes what the environment setup must be inorder for this application to compile and execute.
 
 ## Programs ##
@@ -31,17 +33,46 @@ turned on:
  - Then open the project properties and set the properties appropriatly
 
 ### Debug Mode (only for testing should be run Release Mode) ###
- - In the Debuging propertie set the _Environment_ to `PATH=<Path to opencv builds dir>\bin\Debug;<Path to opencv build dir>\x86\vc10\bin;C:\OpenCV\opencv\build\x86\vc
+ - In the Debuging propertie set the _Environment_ to `PATH=<Path to opencv builds dir>\bin\Debug;<Path to opencv build dir>\x86\vc10\bin;<Path to opencv build dir>\x86\vc
 10\bin;$(Path)`
 ![alt text](https://github.com/ccard/Indoor_Localization_server/blob/debug_mode/ScreenShots/Debug_Debug_Config.png "See ScreenShots folder")
- - In the _C/C++_ configuration page set Additional Dependencies to `<Path to opencv build dir>\include;%(AdditionalIncludeDirectories)`
+ - In the _C/C++_ configuration page set _Additional Dependencies_ to `<Path to opencv build dir>\include;%(AdditionalIncludeDirectories)`
 ![alt text](https://github.com/ccard/Indoor_Localization_server/blob/debug_mode/ScreenShots/Debug_C_CPP_Config.png "See ScreenShots folder")
- - (Optional) To turn on OpenMP go to _C/C++_->_Language_ and set Open MP Support to Yes
+ - (__Optional__) To turn on OpenMP go to _C/C++_->_Language_ and set _Open MP Support_ to Yes
 ![alt text](https://github.com/ccard/Indoor_Localization_server/blob/debug_mode/ScreenShots/Debug_OpenMP_Config.png "See ScreenShots folder")
  - In the _Linker_ configuration page set _Additional Library Directories_ to `<Path to opencv build dir>\x86\vc10;<Path to opencv build dir>\x86\vc10\lib;%(AdditionalLibraryDirectories)`
 ![alt text](https://github.com/ccard/Indoor_Localization_server/blob/debug_mode/ScreenShots/Debug_Linker_Config.png "See ScreenShots folder")
  - In the _Linker_->_Input_ set _Addition Dependincies_ to:
 ```
- 	opencv_calib3d248d.lib;opencv_contrib248d.lib;opencv_core248d.lib;opencv_features2d248d.lib;opencv_flann248d.lib;opencv_gpu248d.lib;opencv_highgui248d.lib;opencv_imgproc248d.lib;opencv_legacy248d.lib;opencv_ml248d.lib;opencv_nonfree248d.lib;opencv_objdetect248d.lib;opencv_photo248d.lib;opencv_stitching248d.lib;opencv_ts248d.lib;opencv_video248d.lib;opencv_videostab248d.lib;%(AdditionalDependencies)
+ 	opencv_calib3d248d.lib;opencv_contrib248d.lib;opencv_core248d.lib;opencv_features2d248d.lib;opencv_flann248d.lib;opencv_gpu248d.lib;opencv_highgui248d.lib;
+ 	opencv_imgproc248d.lib;opencv_legacy248d.lib;opencv_ml248d.lib;opencv_nonfree248d.lib;opencv_objdetect248d.lib;opencv_photo248d.lib;opencv_stitching248d.lib;
+ 	opencv_ts248d.lib;opencv_video248d.lib;opencv_videostab248d.lib;%(AdditionalDependencies)
 ```
 ![alt text](https://github.com/ccard/Indoor_Localization_server/blob/debug_mode/ScreenShots/Debug_Linker_Input_Config.png "See ScreenShots folder")
+
+### Release Mode (Perfered execution mode) ###
+&nbsp;&nbsp;&nbsp;&nbsp;This will be identical to the debug mode except for some config changes:
+ - In the Debuging propertie set the _Environment_ to `PATH=<Path to opencv builds dir>\bin\Release;<Path to opencv build dir>\x86\vc10\bin;<Path to opencv build dir>\x86\vc
+10\bin;$(Path)`
+ - In the _C/C++_ configuration page set _Additional Dependencies_ to `<Path to opencv build dir>\include;%(AdditionalIncludeDirectories)`
+ - (__Optional__) To turn on OpenMP go to _C/C++_->_Language_ and set _Open MP Support_ to Yes
+ - In the _Linker_ configuration page set _Additional Library Directories_ to `<Path to opencv build dir>\x86\vc10;<Path to opencv build dir>\x86\vc10\lib;%(AdditionalLibraryDirectories)`
+ - In the _Linker_->_Input_ set _Addition Dependincies_ to:
+ ```
+ 	opencv_calib3d248.lib;opencv_contrib248.lib;opencv_core248.lib;opencv_features2d248.lib;opencv_flann248.lib;opencv_gpu248.lib;
+ 	opencv_highgui248.lib;opencv_imgproc248.lib;opencv_legacy248.lib;opencv_ml248.lib;opencv_nonfree248.lib;opencv_objdetect248.lib;
+ 	opencv_photo248.lib;opencv_stitching248.lib;opencv_ts248.lib;opencv_video248.lib;opencv_videostab248.lib;%(AdditionalDependencies)
+ ```
+
+--------
+# Compilation #
+&nbsp;This section describes how to compile the program.
+
+## VS Compilation ##
+&nbsp;&nbsp;You should only have to do a build/rebuild on the project and it should all work if you set up the [environment](#environment) correctly.
+
+## Linux ##
+&nbsp;&nbsp;__Not Supported__ at this time!
+
+---------
+# Program Parts #
