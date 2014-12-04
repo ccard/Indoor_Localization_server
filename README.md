@@ -58,11 +58,11 @@ turned on:
  - (__Optional__) To turn on OpenMP go to _C/C++_->_Language_ and set _Open MP Support_ to Yes
  - In the _Linker_ configuration page set _Additional Library Directories_ to `<Path to opencv build dir>\x86\vc10;<Path to opencv build dir>\x86\vc10\lib;%(AdditionalLibraryDirectories)`
  - In the _Linker_->_Input_ set _Addition Dependincies_ to:
- ```
+```
  	opencv_calib3d248.lib;opencv_contrib248.lib;opencv_core248.lib;opencv_features2d248.lib;opencv_flann248.lib;opencv_gpu248.lib;
  	opencv_highgui248.lib;opencv_imgproc248.lib;opencv_legacy248.lib;opencv_ml248.lib;opencv_nonfree248.lib;opencv_objdetect248.lib;
  	opencv_photo248.lib;opencv_stitching248.lib;opencv_ts248.lib;opencv_video248.lib;opencv_videostab248.lib;%(AdditionalDependencies)
- ```
+```
 
 --------
 # Compilation #
