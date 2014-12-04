@@ -53,6 +53,10 @@ public:
 		return match->find(lhs,(*db));
 	}
 
+	const ImageProvider<ImgType>& getDB(){
+		return db;
+	}
+
 #if DEBUG
 	bool performTestingStats(ImgProviderType &pr,string file){
 		return false;
