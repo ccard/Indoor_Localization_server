@@ -151,12 +151,12 @@ public:
 	}
 
 	/**
-	 * Performs database testing based on video input
-	 *
-	 * @param: the video file to open
-	 * @param: the location to save the results to
-	 * @param: the sampling frequency
-	 */
+	* Performs database testing based on video input
+	*
+	* @param: the video file to open
+	* @param: the location to save the results to
+	* @param: the sampling frequency
+	*/
 	void performVideoTesting(string vFile, string outFile, bool manualComparison = false, int sampleFrequency = 5){
 		VideoCapture vid(vFile.c_str());
 		if (vid.isOpened()){
@@ -167,33 +167,30 @@ public:
 
 				namedWindow("Frame");
 				namedWindow("Match");
-				Mat frame,empty(20,20);
-				
-				while((vid >> frame) != NULL){
+				Mat frame,empty(20,20,CV_16S);
+				vid >> frame;
+				do{
 					++num_sampled;
 					MyMat img;
 					frame.copyTo(img);
+					//resize(img,img,Size(816,612));
 					img.initDescriptor();
 					img.makeMask();
 					img.calcDescriptor();
 
 					int img_num = match->find(img,(*db));
 
-					imshow("Frame",img);
+					imshow("Frame",drawKeyPoints(img));
 
-					if(img_num <= Matcher::ERROR){
+					if(img_num <= Matcher<ImgType>::ERROR){
 						imshow("Match",empty);
 					} else {
 						ImgType tmpimg = db->getImage(img_num);
 
-						if(tmpimg.hasImage()){
-							if(tmpimg.loadImage()){
-								imshow("Match",tmpimg);
-							} else {
-								cout << "failed to load image" << endl;
-							}
+						if(tmpimg.loadImage()){
+							imshow("Match",drawKeyPoints(tmpimg));
 						} else {
-							cout << "no image to display" << endl;
+							cout << "failed to load image" << endl;
 						}
 					}
 
@@ -209,7 +206,8 @@ public:
 					for(int i = 1; i < sampleFrequency-1; ++i) {
 						vid.grab();
 					}
-				}
+					vid >> frame;
+				} while (!frame.empty());
 
 				ofstream out(outFile);
 				out << "Correct,False Positives,Number of Samples" << endl;
@@ -228,6 +226,7 @@ public:
 				while (vid.grab()) {
 					MyMat m;
 					vid.retrieve(m);
+					resize(m,m,Size(612,816));
 					m.initDescriptor();
 					m.makeMask();
 					m.calcDescriptor();
@@ -235,20 +234,20 @@ public:
 					int frame = vid.get(CV_CAP_PROP_POS_FRAMES);
 
 					int img = match->find(m,(*db));
-					pair<int,string> tmp(frame,(img <= Matcher::ERROR ? "No Match" : db->getImage(img).getName()));
+					pair<int,string> tmp(frame,(img <= Matcher<ImgType>::ERROR ? "No Match" : db->getImage(img).getName()));
 					results.insert(make_pair(time,tmp));
 					for(int i = 1; i < sampleFrequency-1; ++i) {
 						vid.grab();
 					}
 				}
-			}
 
-			ofstream out(outFile);
-			for(map<double,pair<int,string>>::iterator i = results.begin(); i != results.end(); ++i){
-				out << i->first << "," << i->second.first << "," << i->second.second << endl;
+				ofstream out(outFile);
+				for(map<double,pair<int,string>>::iterator i = results.begin(); i != results.end(); ++i){
+					out << i->first << "," << i->second.first << "," << i->second.second << endl;
+				}
+				out.close();
+				cout << "Finished .... " << endl;
 			}
-			out.close();
-			cout << "Finished .... " << endl;
 		} else {
 			ASSERT(false,"Failed to open video file "<<vFile);
 		}
@@ -313,6 +312,40 @@ private:
 			ret.push_back(group);
 		}
 		return ret;
+	}
+
+	Mat drawKeyPoints(MyMat &im, bool draw_arrows = false,Scalar color = Scalar(0,0,255),bool draw_circle = false){
+		KeyPoint p;
+		Mat r;
+		im.copyTo(r);
+		for(int i = 0; i < im.getKeyPoints().size(); ++i) {
+			p = im.getKeyPoint(i);
+
+			if(draw_circle) circle(r,p.pt,p.size,color,1);
+
+			if (draw_arrows){
+				double x = p.pt.x + p.size*cos(p.angle);
+				double y = p.pt.y + p.size*sin(p.angle);
+
+				int mag = 5;
+				double pi = 3.141592653;
+				double x1 = x-mag*cos(p.angle+pi/4);
+				double y1 = y-mag*sin(p.angle+pi/4);
+
+				double x2 = x-mag*cos(p.angle-pi/4);
+				double y2 = y-mag*sin(p.angle-pi/4);
+
+				line(r,p.pt,Point(x,y),color);
+				line(r,Point(x,y),Point(x1,y1),color);
+				line(r,Point(x,y),Point(x2,y2),color);
+			}
+			circle(r,p.pt,2,Scalar(0,0,255),-1);
+			char buff[33];
+			itoa(i,buff,10);
+			putText(r,buff,Point(p.pt.x+4,p.pt.y+4),FONT_HERSHEY_COMPLEX,.5,
+				Scalar(255,13,255));
+		}
+		return r;
 	}
 #endif
 };

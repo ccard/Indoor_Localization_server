@@ -12,9 +12,12 @@
 int _tmain(int argc, _TCHAR* argv[])
 {
 #if DEBUG
-	LocalizationManager<DBImage,MatProvider<MyMat>,MyMat> manage("test");
-	MatProvider<MyMat> t("test");
-	manage.performTestingStats(t,"gest.csv");
+	//Flags for what to run
+	bool video = true;
+	if(video){
+		LocalizationManager<MyMat,MatProvider<MyMat>,MyMat> manage("Images\\db_images_new.txt");
+		manage.performVideoTesting("Images\\3rd_floor_brown_se_stair.mp4","Images\\res.txt",true);
+	}
 #else
 
 #endif
