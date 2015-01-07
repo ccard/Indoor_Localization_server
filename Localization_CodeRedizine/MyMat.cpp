@@ -1,7 +1,7 @@
 #include "MyMat.h"
 #include "MyLine.h"
 
-void MyMat::initORB(){
+void MyMat::initDescriptor(){
 	initOrb = true;
 	if(gray.empty()) cvtColor(*this,gray,CV_BGR2GRAY);
 	orbDescriptor = ORB(orbParams.nfeatures,orbParams.scaleFactor,orbParams.nlevels,
@@ -23,7 +23,7 @@ void MyMat::makeMask(int maskType, int side_radius, int side2){
 	}
 }
 
-bool MyMat::calcORB(){
+bool MyMat::calcDescriptor(){
 	if(!initOrb) return false;
 	if(mask.empty()) return false;
 

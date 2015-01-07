@@ -36,6 +36,8 @@ template <typename T>
 	  }
 
 	  bool open(){ return in.is_open() || db.size() > 0;}
+
+	  size_t size(){ return db.size(); }
   
 	virtual T getImage(size_t index) = 0;
 
@@ -46,6 +48,12 @@ template <typename T>
 	virtual string getImageLocation(size_t index) = 0;
 
 	virtual bool saveImages() = 0;
+
+#if DEBUG
+	void addImage(T image){
+		db.push_back(image);
+	}
+#endif
   protected:
 	  vector<T> db;
 	  ifstream in;

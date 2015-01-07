@@ -4,11 +4,11 @@ void DBImage::makeMask(int maskType, int side_radius, int side2){
 		return;
 }
 
-void DBImage::initORB(){
+void DBImage::initDescriptor(){
 		return;
 }
 
-bool DBImage::calcORB(){
+bool DBImage::calcDescriptor(){
 	return false;
 }
 

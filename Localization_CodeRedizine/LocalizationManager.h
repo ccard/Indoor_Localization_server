@@ -62,12 +62,197 @@ public:
 		return false;
 	}
 
-	void performSubsample(string file){
+	void performSubsample(string file, int matchType = LSHMATCHER){
+		cout << "Performing subsample testing. The results will be outputed to '" << file << "' in csv format." << endl;
+		cout << "The format will be 'group,query_file_name,guessed_file_name'." << endl;
+		vector<set<int>> testSets = generateTestingSet(30,5);
+		vector<pair<int,pair<string,string>>> results,privres;
 
+#ifdef _OPENMP
+		cout << "Starting tests in parallel...." << endl;
+#pragma omp parallel private(privres) shared(results) num_threads(2)
+		{
+#pragma omp for
+			for(int i = 0; i < testSets.size(); ++i){
+				cout << "Running group: " << i << endl;
+				ImageProvider<ImgType> *ndb;
+				vector<ImgType> testSet;
+#pragma omp critical
+				{
+					createTestingSet(testSets[i],testSet,ndb);
+				}
+				Matcher<ImgType> *nmatch;
+				switch(matchType){
+				case LSHMATCHER:
+					nmatch = new LSHMatching<ImgType>();
+					nmatch->operator<< (*ndb);
+					nmatch->train();
+					break;
+				default:
+					ASSERT(false,"There is no matching type: "<<matchType);
+				}
+
+				for(vector<ImgType>::iterator j = testSet.begin(); j != testSet.end(); ++j){
+					int img = nmatch->find(*j,ndb);
+					if (img <= Matcher::ERROR){
+						privres.push_back(make_pair(i,make_pair(j->getName(),"no match")));
+					} else {
+						privres.push_back(make_pair(i,make_pair(j->getName(),ndb->getImage(img).getName())));
+					}
+				}
+				delete []ndb;
+				testSet.clear();
+			}
+#pragma omp critical
+			{
+				results.insert(results.end(),privres.begin(),privres.end());
+			}
+		}
+#else
+		cout << "Starting sequential tests...." << endl;
+		for(int i = 0; i < testSets.size(); ++i){
+			cout << "Running group: " << i << endl;
+			ImageProvider<ImgType> *ndb;
+			vector<ImgType> testSet;
+			createTestingSet(testSets[i],testSet,ndb);
+			Matcher<ImgType> *nmatch;
+			switch(matchType){
+			case LSHMATCHER:
+				nmatch = new LSHMatching<ImgType>();
+				nmatch->operator<< (*ndb);
+				nmatch->train();
+				break;
+			default:
+				ASSERT(false,"There is no matching type: "<<matchType);
+			}
+
+			for(vector<ImgType>::iterator j = testSet.begin(); j != testSet.end(); ++j){
+				int img = nmatch->find(*j,ndb);
+				if (img <= Matcher::ERROR){
+					results.push_back(make_pair(i,make_pair(j->getName(),"no match")));
+				} else {
+					results.push_back(make_pair(i,make_pair(j->getName(),ndb->getImage(img).getName())));
+				}
+			}
+			delete []ndb;
+			testSet.clear();
+		}
+#endif
+		cout << "Writing results to the file ..... " << endl;
+		ofstream out(file);
+		for(int i = 0; i < results.size(); ++i){
+			char buff[10];
+			itoa(results[i].first,buff,10);
+			string tmps = string(buff) + "," + results[i].second.first + "," + results[i].second.second;
+			out << tmps << endl;
+		}
+		out.close();
+		cout << "Finished!" << endl;
 	}
 
-	void performVideoTesting(string vFile){
+	/**
+	 * Performs database testing based on video input
+	 *
+	 * @param: the video file to open
+	 * @param: the location to save the results to
+	 * @param: the sampling frequency
+	 */
+	void performVideoTesting(string vFile, string outFile, bool manualComparison = false, int sampleFrequency = 5){
+		VideoCapture vid(vFile.c_str());
+		if (vid.isOpened()){
+			if (manualComparison){
+				int correct = 0;
+				int falsePositives = 0;
+				int num_sampled = 0;
 
+				namedWindow("Frame");
+				namedWindow("Match");
+				Mat frame,empty(20,20);
+				
+				while((vid >> frame) != NULL){
+					++num_sampled;
+					MyMat img;
+					frame.copyTo(img);
+					img.initDescriptor();
+					img.makeMask();
+					img.calcDescriptor();
+
+					int img_num = match->find(img,(*db));
+
+					imshow("Frame",img);
+
+					if(img_num <= Matcher::ERROR){
+						imshow("Match",empty);
+					} else {
+						ImgType tmpimg = db->getImage(img_num);
+
+						if(tmpimg.hasImage()){
+							if(tmpimg.loadImage()){
+								imshow("Match",tmpimg);
+							} else {
+								cout << "failed to load image" << endl;
+							}
+						} else {
+							cout << "no image to display" << endl;
+						}
+					}
+
+					cout << "Is this correct [y]es or [n]o?";
+					char yn = waitKey();
+					cout << endl;
+					if(yn == 'y'){
+						correct++;
+					} else {
+						falsePositives++;
+					}
+
+					for(int i = 1; i < sampleFrequency-1; ++i) {
+						vid.grab();
+					}
+				}
+
+				ofstream out(outFile);
+				out << "Correct,False Positives,Number of Samples" << endl;
+				out << correct << "," << falsePositives << "," << num_sampled << endl;
+				out.close();
+
+				cout << "Num correct: " << correct << endl;
+				cout << "False positives: " << falsePositives << endl;
+				cout << "Accuracy: " << ((correct/num_sampled)*100) << "%" << endl;
+
+			} else {
+				cout << "The results will be written to '" << outFile << "' in csv fromat." << endl;
+				cout << "The format of the file will be 'timestamp,fram number,matched database image'" << endl;
+				map<double,pair<int,string>> results;
+
+				while (vid.grab()) {
+					MyMat m;
+					vid.retrieve(m);
+					m.initDescriptor();
+					m.makeMask();
+					m.calcDescriptor();
+					double time = vid.get(CV_CAP_PROP_POS_MSEC);
+					int frame = vid.get(CV_CAP_PROP_POS_FRAMES);
+
+					int img = match->find(m,(*db));
+					pair<int,string> tmp(frame,(img <= Matcher::ERROR ? "No Match" : db->getImage(img).getName()));
+					results.insert(make_pair(time,tmp));
+					for(int i = 1; i < sampleFrequency-1; ++i) {
+						vid.grab();
+					}
+				}
+			}
+
+			ofstream out(outFile);
+			for(map<double,pair<int,string>>::iterator i = results.begin(); i != results.end(); ++i){
+				out << i->first << "," << i->second.first << "," << i->second.second << endl;
+			}
+			out.close();
+			cout << "Finished .... " << endl;
+		} else {
+			ASSERT(false,"Failed to open video file "<<vFile);
+		}
+		vid.release();
 	}
 
 #if INSPECT
@@ -104,5 +289,30 @@ private:
 		db = new DBProvider<ImgType>(file);
 		return db->open();
 	}
-};
 
+#if DEBUG
+	void createTestingSet(set<int> indicies, vector<ImgType> &testSet, ImageProvider<ImgType> &newdb){
+		for(int i = 0; i < db->size(); ++i){
+			if(indicies.find(i) != indicies.end()){
+				testSet.push_back(db->getImage(i));
+			} else {
+				newdb.addImage(db->getImage(i));
+			}
+		}
+	}
+	vector<set<int>> generateTestingSet(int groupSize,int num_tests){
+		vector<set<int>> ret;
+
+		for(int i = 0; i < num_tests; ++i){
+			set<int> group;
+			srand(time(NULL)*rand());
+			while(group.size() < groupSize){
+				int index = rand()%db->size();
+				if(group.find(index) == group.end()) group.insert(index);
+			}
+			ret.push_back(group);
+		}
+		return ret;
+	}
+#endif
+};

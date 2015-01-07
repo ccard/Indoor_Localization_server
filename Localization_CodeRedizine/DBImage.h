@@ -15,12 +15,12 @@ public:
 	 *
 	 * @param: the parm object containing the orb pramaters
 	 */
-	void initORB();
+	void initDescriptor();
 
 	/**
 	 * Calculates the orb descriptor of the image
 	 */
-	bool calcORB();
+	bool calcDescriptor();
 	
 	/**
 	 * returns the size of the drawable image

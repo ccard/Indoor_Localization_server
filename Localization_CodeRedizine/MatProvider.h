@@ -66,9 +66,9 @@ private:
 				ImgType temp;
 				imread(images[i]).copyTo(temp);
 				resize(temp,temp,Size(612,816));
-				temp.initORB();
+				temp.initDescriptor();
 				temp.makeMask();
-				temp.calcORB();
+				temp.calcDescriptor();
 				priv.insert(make_pair(i,temp));
 			}
 #pragma omp critical
@@ -84,9 +84,9 @@ private:
 			ImgType temp;
 			imread(*i).copyTo(temp);
 			resize(temp,temp,Size(612,816));
-			temp.initORB();
+			temp.initDescriptor();
 			temp.makeMask();
-			temp.calcORB();
+			temp.calcDescriptor();
 			ret.push_back(temp);
 		}
 #endif

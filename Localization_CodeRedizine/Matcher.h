@@ -49,6 +49,8 @@ public:
 	 * compares the query image to the database
 	 *
 	 * @param: the query image
+	 *
+	 * @return: the image index or -1
 	 */
 	virtual int find(ImageContainer& query, ImageProvider<ImType> &db) = 0;
 

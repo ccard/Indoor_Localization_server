@@ -25,11 +25,11 @@ public:
 
 	MyMat(string img_file,Mat descriptor, vector<KeyPoint> kps): ImageContainer(img_file,descriptor, kps){}
 
-	void initORB();
+	void initDescriptor();
 
 	void makeMask(int maskType = ImageContainer::CIRCLE, int side_radius = 9, int side2 = 16);
 
-	bool calcORB();
+	bool calcDescriptor();
 
 	Size imageSize();
 
