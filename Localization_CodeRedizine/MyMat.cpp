@@ -41,11 +41,11 @@ bool MyMat::hasImage(){
 }
 
 bool MyMat::loadImage(){
-	if(!hasImage()) return true;
+	if(hasImage()) return true;
 	if(name.size() == 0) return false;
 	Mat tmp = imread(name);
 	cv::resize(tmp,tmp,Size(612,816));
 	tmp.copyTo(*this);
 	tmp.release();
-	return (!hasImage());
+	return hasImage();
 }

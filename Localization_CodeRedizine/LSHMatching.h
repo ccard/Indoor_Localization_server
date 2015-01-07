@@ -302,7 +302,7 @@ private:
 		map<int,ImType> better_matches;
 		for(map<int,double>::iterator i = image_inliers.begin(); i != image_inliers.end(); ++i){
 			if(i->second >= second_best){
-				better_matches.insert(make_pair(i->first,db.getImage(index_dbindex[i->first])));
+				better_matches.insert(make_pair(i->first,db.getImage(i->first)));
 			}
 		}
 

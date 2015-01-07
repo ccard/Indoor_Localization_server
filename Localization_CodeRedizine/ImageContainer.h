@@ -30,12 +30,14 @@
 	*  scoretype: the way to rank features default HARRIS score
 	*  patchsize: the size of the patch used by the brief descriptors
 	*/
-  	static struct ORBParams{
+  	struct ORBParams{
+		ORBParams() : nfeatures(1500), scaleFactor(1.2f),nlevels(8), edgeThresh(31),firstLevel(3),WTA_K(3),scoreType(cv::ORB::HARRIS_SCORE),patchSize(31),_init(true) {}
 		int nfeatures,nlevels,edgeThresh,firstLevel,
 		WTA_K,scoreType,patchSize;
 		float scaleFactor;
 		bool _init;//Ensures that this is only initialized once
-	} orbParams;
+	};
+	static struct ORBParams orbParams;
 #endif
 
 	//Defines the debug flag to determine if other classes should compile in debug mode
@@ -58,6 +60,7 @@
         if (! (condition)) { \
             std::cerr << "Assertion `" #condition "` failed in " << __FILE__ \
                       << " line " << __LINE__ << ": " << message << std::endl; \
+			std::system("PAUSE"); \
             std::exit(EXIT_FAILURE); \
         } \
     } while (false)

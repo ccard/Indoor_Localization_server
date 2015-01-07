@@ -21,7 +21,7 @@ class MyMat :
 	public ImageContainer, public Mat
 {
 public:
-	MyMat(): ImageContainer(){}
+	MyMat(): ImageContainer(){ init(); }
 
 	MyMat(string img_file,Mat descriptor, vector<KeyPoint> kps): ImageContainer(img_file,descriptor, kps){}
 
