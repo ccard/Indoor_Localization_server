@@ -6,13 +6,21 @@ class DBProvider :
 	public ImageProvider<ImType>
 {
 public:
+
+	DBProvider(){}
+
 	DBProvider(string file){
+		open(file);
+	}
+
+	bool open(string file){
 		in = ifstream(file);
 		if(!in.is_open()){
 			ASSERT(false,"Failed to open file: "<<file);
 		} else {
 			db = readDB();
 		}
+		return true;
 	}
 
 	ImType getImage(size_t index){

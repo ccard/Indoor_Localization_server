@@ -1,7 +1,11 @@
 #pragma once
 /**
  * Author: Chris Card
- * This Interface encapsulates the different matching paradimes
+ * 
+ * This interface is used to perform the localization and abstracts how the matching is performed.
+ * This interface also defines the core of the program and can be used seperatly from LocalizationManager
+ * class however it is best used in conjunction with the LocalizationManager class as the LocalizationManager
+ * abstracts some of the set up process and stores the the database and matcher in memory so that it can be used repetedly
  */
 #include "opencv2\core\core.hpp"
 #include "opencv2\highgui\highgui.hpp"

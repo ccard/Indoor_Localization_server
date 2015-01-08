@@ -2,8 +2,8 @@
 /**
  * Author: Chris Card
  *
- * This interface process images and provides them
- * to the other objects
+ * This interface is for any class that will read in images from a database and then provides those
+ * images to any class that may need them
  */
 
 #include "ImageContainer.h"
@@ -25,6 +25,13 @@
 using namespace cv;
 using namespace std;
 
+#ifdef _OPENMP
+#ifndef _OPENMP_THREAD_CNT
+#define _OPENMP_THREAD_CNT
+#define NUM_THREADS 4
+#endif
+#endif
+
 template <typename T>
  class ImageProvider
   {
@@ -32,13 +39,16 @@ template <typename T>
   public:
 
 	  ~ImageProvider(){
-		  db.clear();
+		 db.clear();
 	  }
 
-	  bool open(){ return in.is_open() || db.size() > 0;}
+
+	  bool isOpen(){ return in.is_open() || db.size() > 0;}
 
 	  size_t size(){ return db.size(); }
   
+	virtual bool open(string file) = 0;
+
 	virtual T getImage(size_t index) = 0;
 
 	virtual T operator[] (size_t index) = 0;

@@ -2,8 +2,15 @@
 /**
  * Author: Chris Card
  *
- * This class interface contains an image either the image
- * iteself or the representation of an image
+ * This interface encapsulates images used for localization and displaying those images 
+ * (not required but nice)
+ *
+ * This is the core of the program all other classes use the Image container to encapsulate image
+ * information
+ *
+ * Usage:
+ *  At the very least other classes must be able to retrieve the descriptor
+ *  and the keypoints from any class implementing this interface
  */
 
 #include "opencv2\core\core.hpp"

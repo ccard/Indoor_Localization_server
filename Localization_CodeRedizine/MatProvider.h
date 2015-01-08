@@ -12,13 +12,19 @@ class MatProvider :
 {
 	static_assert(is_same<ImgType,MyMat>::value,"The type must be of MyMat to use this class");
 public:
+	MatProvider(){}
 	MatProvider(string file){
+		open(file);	
+	}
+
+	bool open(string file){
 		in = ifstream(file);
 		if(!in.is_open()){
 			ASSERT(false,"Failed to open file: "<<file);
 		} else {
 			db = readDB();
 		}
+		return true;
 	}
 
 	ImgType getImage(size_t index){
@@ -59,7 +65,7 @@ private:
 		vector<ImgType> ret = vector<ImgType>(images.size());
 		map<size_t,ImgType> priv;
 
-#pragma omp parallel private(priv) shared(ret) num_threads(4)
+#pragma omp parallel private(priv) shared(ret) num_threads(NUM_THREADS)
 		{
 #pragma omp for
 			for(int i = 0; i < images.size(); ++i){
