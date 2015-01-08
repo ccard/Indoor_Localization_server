@@ -3,6 +3,16 @@
 /**
 * Author: Chris Card
 * This class calls all of the necessary files and performs the matching
+* it is inteded to be the primary interface to for matching the only class you need to implement
+* are other matchers, ImageProviders, and Image types that are needed
+* 
+* Usage:
+*  Options:
+*  1) Use provide sub types of Matcher, ImageProvider, and ImageContainer as this classes template types
+*  2) Implement your own Matchers, ImageProviders, and/or ImageContainers by extending them and passing them in as
+*     the template type parameters
+*
+*  So long as your classes extend Matcher, ImageProvider, and ImageContainer this class can utilize them
 */
 
 #include "opencv2\core\core.hpp"
@@ -15,45 +25,39 @@
 #include <type_traits>
 #include "ImageProvider.h"
 #include "ImageContainer.h"
-#include "DBImage.h"
 #include "MyMat.h"
-#include "DBProvider.h"
-#include "LSHMatching.h"
 #include "Matcher.h"
+#include <time.h>
+#include <stdlib.h>
 
 using namespace std;
 using namespace cv;
 
-#if DEBUG
-template<typename ImgType, typename ImgProviderType, typename ImgProviderImgType>
-#else
-template<typename ImgType>
-#endif
+template<typename ImgType, typename ImgProviderType, typename ImgMatcherType>
 class LocalizationManager
 {
-#if DEBUG
 	static_assert(is_base_of<ImageContainer,ImgType>::value, "Must be derived class of ImageContainer");
-	static_assert(is_base_of<ImageContainer,ImgProviderImgType>::value, "Must be derived class of ImageContainer");
-	static_assert(is_base_of<ImageProvider<ImgProviderImgType>,ImgProviderType>::value,"Must be derived class of ImageProvider");
-#else
-	static_assert(is_base_of<ImageContainer,ImgType>::value, "Must be derived class of ImageContainer");;
-#endif
+	static_assert(is_base_of<ImageProvider<ImgType>,ImgProviderType>::value, "Must be derived class of ImageProvider");
+	static_assert(is_base_of<Matcher<ImgType>,ImgMatcherType>::value,"Must be derived class of Matcher");
+
 public:
 	const static int LSHMATCHER = 1;
 
 	LocalizationManager(string file,int matchType=LSHMATCHER){
-		ASSERT(init(file,matchType),"Failed to initialize");
+		if(!init(file,matchType)){
+			ASSERT(false,"Failed to initialize");
+		}
 	}
-	~LocalizationManager(){
-		delete []db;
-		delete []match;
-	}
+	/*~LocalizationManager(){
+		delete db;
+		delete match;
+	}*/
 
 	int operator ==(const ImageContainer &lhs){
 		return match->find(lhs,(*db));
 	}
 
-	const ImageProvider<ImgType>& getDB(){
+	const ImgProviderType getDB(){
 		return db;
 	}
 
@@ -70,7 +74,7 @@ public:
 
 #ifdef _OPENMP
 		cout << "Starting tests in parallel...." << endl;
-#pragma omp parallel private(privres) shared(results) num_threads(2)
+#pragma omp parallel private(privres) shared(results) num_threads(NUM_THREADS)
 		{
 #pragma omp for
 			for(int i = 0; i < testSets.size(); ++i){
@@ -79,10 +83,12 @@ public:
 				vector<ImgType> testSet;
 #pragma omp critical
 				{
-					createTestingSet(testSets[i],testSet,ndb);
+					createTestingSet(testSets[i],testSet,(*ndb));
 				}
-				Matcher<ImgType> *nmatch;
-				switch(matchType){
+				ImgMatcherType nmatch;
+				nmatch << (*ndb);
+				nmatch.train();
+				/*switch(matchType){
 				case LSHMATCHER:
 					nmatch = new LSHMatching<ImgType>();
 					nmatch->operator<< (*ndb);
@@ -90,17 +96,17 @@ public:
 					break;
 				default:
 					ASSERT(false,"There is no matching type: "<<matchType);
-				}
+				}*/
 
 				for(vector<ImgType>::iterator j = testSet.begin(); j != testSet.end(); ++j){
-					int img = nmatch->find(*j,ndb);
-					if (img <= Matcher::ERROR){
+					int img = nmatch.find(*j,(*ndb));
+					if (img <= ImgMatcherType::ERROR){
 						privres.push_back(make_pair(i,make_pair(j->getName(),"no match")));
 					} else {
 						privres.push_back(make_pair(i,make_pair(j->getName(),ndb->getImage(img).getName())));
 					}
 				}
-				delete []ndb;
+				delete ndb;
 				testSet.clear();
 			}
 #pragma omp critical
@@ -110,37 +116,30 @@ public:
 		}
 #else
 		cout << "Starting sequential tests...." << endl;
-		for(int i = 0; i < testSets.size(); ++i){
+		for(size_t i = 0; i < testSets.size(); ++i){
 			cout << "Running group: " << i << endl;
 			ImageProvider<ImgType> *ndb;
 			vector<ImgType> testSet;
-			createTestingSet(testSets[i],testSet,ndb);
-			Matcher<ImgType> *nmatch;
-			switch(matchType){
-			case LSHMATCHER:
-				nmatch = new LSHMatching<ImgType>();
-				nmatch->operator<< (*ndb);
-				nmatch->train();
-				break;
-			default:
-				ASSERT(false,"There is no matching type: "<<matchType);
-			}
+			createTestingSet(testSets[i],testSet,(*ndb));
+			ImgMatcherType nmatch;
+			nmatch << (*ndb);
+			nmatch.train();
 
 			for(vector<ImgType>::iterator j = testSet.begin(); j != testSet.end(); ++j){
-				int img = nmatch->find(*j,ndb);
-				if (img <= Matcher::ERROR){
+				int img = nmatch.find(*j,(*ndb));
+				if (img <= ImgMatcherType::ERROR){
 					results.push_back(make_pair(i,make_pair(j->getName(),"no match")));
 				} else {
 					results.push_back(make_pair(i,make_pair(j->getName(),ndb->getImage(img).getName())));
 				}
 			}
-			delete []ndb;
+			delete ndb;
 			testSet.clear();
 		}
 #endif
 		cout << "Writing results to the file ..... " << endl;
 		ofstream out(file);
-		for(int i = 0; i < results.size(); ++i){
+		for(size_t i = 0; i < results.size(); ++i){
 			char buff[10];
 			itoa(results[i].first,buff,10);
 			string tmps = string(buff) + "," + results[i].second.first + "," + results[i].second.second;
@@ -161,9 +160,8 @@ public:
 		VideoCapture vid(vFile.c_str());
 		if (vid.isOpened()){
 			if (manualComparison){
-				int correct = 0;
-				int falsePositives = 0;
-				int num_sampled = 0;
+				double correct = 0, falsePositives = 0;
+				size_t num_sampled = 0;
 
 				namedWindow("Frame");
 				namedWindow("Match");
@@ -178,14 +176,14 @@ public:
 					img.makeMask();
 					img.calcDescriptor();
 
-					int img_num = match->find(img,(*db));
+					int img_num = match.find(img,db);
 
 					imshow("Frame",drawKeyPoints(img));
 
-					if(img_num <= Matcher<ImgType>::ERROR){
+					if(img_num <= ImgMatcherType::ERROR){
 						imshow("Match",empty);
 					} else {
-						ImgType tmpimg = db->getImage(img_num);
+						ImgType tmpimg = db.getImage(img_num);
 
 						if(tmpimg.loadImage()){
 							imshow("Match",drawKeyPoints(tmpimg));
@@ -196,12 +194,14 @@ public:
 
 					cout << "Is this correct [y]es or [n]o?";
 					char yn = waitKey();
-					cout << endl;
+					cout << yn << endl;
 					if(yn == 'y'){
 						correct++;
 					} else {
 						falsePositives++;
 					}
+
+					cout << "Running accuracy: " << ((correct/num_sampled)*100) << "%" << endl;
 
 					for(int i = 1; i < sampleFrequency-1; ++i) {
 						vid.grab();
@@ -222,20 +222,25 @@ public:
 				cout << "The results will be written to '" << outFile << "' in csv fromat." << endl;
 				cout << "The format of the file will be 'timestamp,fram number,matched database image'" << endl;
 				map<double,pair<int,string>> results;
+				double num_sampled = 0;
+				time_t running = 0;
 
 				while (vid.grab()) {
+					time_t start = time(NULL);
+					++num_sampled;
 					MyMat m;
 					vid.retrieve(m);
-					resize(m,m,Size(612,816));
+					//resize(m,m,Size(612,816));
 					m.initDescriptor();
 					m.makeMask();
 					m.calcDescriptor();
-					double time = vid.get(CV_CAP_PROP_POS_MSEC);
+					double timestamp = vid.get(CV_CAP_PROP_POS_MSEC);
 					int frame = vid.get(CV_CAP_PROP_POS_FRAMES);
 
-					int img = match->find(m,(*db));
-					pair<int,string> tmp(frame,(img <= Matcher<ImgType>::ERROR ? "No Match" : db->getImage(img).getName()));
-					results.insert(make_pair(time,tmp));
+					int img = match.find(m,db);
+					pair<int,string> tmp(frame,(img <= ImgMatcherType::ERROR ? "No Match" : db.getImage(img).getName()));
+					results.insert(make_pair(timestamp,tmp));
+					running += (time(NULL)-start);
 					for(int i = 1; i < sampleFrequency-1; ++i) {
 						vid.grab();
 					}
@@ -247,6 +252,7 @@ public:
 				}
 				out.close();
 				cout << "Finished .... " << endl;
+				cout << "Average time per frame: " << (running/num_sampled) << endl;
 			}
 		} else {
 			ASSERT(false,"Failed to open video file "<<vFile);
@@ -265,48 +271,42 @@ public:
 #endif
 #endif
 private:
-	ImageProvider<ImgType> *db;
-	Matcher<ImgType> *match;
+	ImgProviderType db;
+	ImgMatcherType match;
 
 	bool init(string file,int matchType){
 		if(!loadDB(file)){
 			return false;
 		}
-		switch(matchType){
-		case LSHMATCHER:
-			match = new LSHMatching<ImgType>();
-			match->operator<< (*db);
-			match->train();
-			break;
-		default:
-			ASSERT(false,"There is no matching type: "<<matchType);
-		}
+
+		match << db;
+		match.train();
 		return true;
 	}
 
 	bool loadDB(string file){
-		db = new DBProvider<ImgType>(file);
-		return db->open();
+		db.open(file);
+		return db.isOpen();
 	}
 
 #if DEBUG
 	void createTestingSet(set<int> indicies, vector<ImgType> &testSet, ImageProvider<ImgType> &newdb){
-		for(int i = 0; i < db->size(); ++i){
+		for(size_t i = 0; i < db.size(); ++i){
 			if(indicies.find(i) != indicies.end()){
-				testSet.push_back(db->getImage(i));
+				testSet.push_back(db.getImage(i));
 			} else {
-				newdb.addImage(db->getImage(i));
+				newdb.addImage(db.getImage(i));
 			}
 		}
 	}
-	vector<set<int>> generateTestingSet(int groupSize,int num_tests){
+	vector<set<int>> generateTestingSet(size_t groupSize,int num_tests){
 		vector<set<int>> ret;
 
 		for(int i = 0; i < num_tests; ++i){
 			set<int> group;
 			srand(time(NULL)*rand());
 			while(group.size() < groupSize){
-				int index = rand()%db->size();
+				int index = rand()%db.size();
 				if(group.find(index) == group.end()) group.insert(index);
 			}
 			ret.push_back(group);
@@ -318,7 +318,7 @@ private:
 		KeyPoint p;
 		Mat r;
 		im.copyTo(r);
-		for(int i = 0; i < im.getKeyPoints().size(); ++i) {
+		for(size_t i = 0; i < im.getKeyPoints().size(); ++i) {
 			p = im.getKeyPoint(i);
 
 			if(draw_circle) circle(r,p.pt,p.size,color,1);
