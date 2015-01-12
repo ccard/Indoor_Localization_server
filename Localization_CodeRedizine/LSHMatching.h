@@ -367,8 +367,6 @@ private:
 		//Rematch the images
 		ImgMatches matches2 = doubleCheckMatches(better_matches,query);
 
-		cout << (matches2.empty() ? "empty" : "not empty") << endl;
-
 		//Find fundamental matricies
 		FundRes fundimentals = buildFundimentalMat(matches2);
 
