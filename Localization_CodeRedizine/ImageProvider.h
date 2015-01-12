@@ -59,11 +59,9 @@ template <typename T>
 
 	virtual bool saveImages() = 0;
 
-#if DEBUG
 	void addImage(T image){
 		db.push_back(image);
 	}
-#endif
   protected:
 	  vector<T> db;
 	  ifstream in;
