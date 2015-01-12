@@ -21,7 +21,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	//Flags for what to run
 	int option = VIDEO;
 
-	LocalizationManager<MyMat,DBProvider<MyMat>,LSHMatching<MyMat>> manage("Images\\db_images_new.txt");
+	LocalizationManager<MyMat,DBProvider<MyMat>,LSHMatching<MyMat>> manage("Images\\db_images_new_3rd.txt");
 	switch(option){
 	case VIDEO:
 		manage.performVideoTesting("Images\\3rd_floor_brown_se_stair.mp4","Images\\VideoTestResults.csv",100,true,15,28000);
