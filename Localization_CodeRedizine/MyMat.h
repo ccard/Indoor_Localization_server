@@ -37,6 +37,8 @@ public:
 
 	bool loadImage();
 
+	void getMat(Mat &mat);
+
 private:
 };
 

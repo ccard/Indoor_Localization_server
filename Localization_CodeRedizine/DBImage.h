@@ -35,4 +35,6 @@ public:
 	bool hasImage();
 
 	bool loadImage(){return false;}
+
+	void getMat(Mat &mat){ };
 };

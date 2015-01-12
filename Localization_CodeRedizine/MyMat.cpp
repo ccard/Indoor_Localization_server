@@ -49,3 +49,9 @@ bool MyMat::loadImage(){
 	tmp.release();
 	return hasImage();
 }
+
+void MyMat::getMat(Mat &mat){
+	if(loadImage()){
+		this->copyTo(mat);
+	}
+}
