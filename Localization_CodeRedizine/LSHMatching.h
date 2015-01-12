@@ -137,6 +137,38 @@ private:
 			return newMatches;
 	}
 
+	KNNRes convertDMatch(vector<vector<DMatch>> matches,
+		map<int,ImType> &db, map<int,int> tmpdb_to_db, ImageContainer &query){
+			KNNRes newMatches;
+
+			for(vector<vector<DMatch>>::iterator i = matches.begin();
+				i != matches.end(); ++i){
+					for(vector<DMatch>::iterator j = (*i).begin();
+						j != (*i).end(); ++j){
+							DMatch m = *j;
+							m.imgIdx = tmpdb_to_db[j->imgIdx];
+							MyDMatch t(m);
+							t.train_kp = db[t.imgIdx].getKeyPoint(j->trainIdx);
+							t.query_kp = query.getKeyPoint(j->queryIdx);
+							if(newMatches.find(t.imgIdx) != newMatches.end()){
+								if(newMatches[t.imgIdx].find(t.queryIdx) != newMatches[t.imgIdx].end()){
+									newMatches[t.imgIdx][t.queryIdx].push_back(t);
+								} else {
+									newMatches[t.imgIdx].insert(pair<int,vector<MyDMatch>>(t.queryIdx,vector<MyDMatch>()));
+									newMatches[t.imgIdx][t.queryIdx].push_back(t);
+								}
+							} else {
+								map<int,vector<MyDMatch>> tmp;
+								tmp.insert(pair<int,vector<MyDMatch>>(t.queryIdx,vector<MyDMatch>()));
+								newMatches.insert(pair<int,map<int,vector<MyDMatch>>>(t.imgIdx,tmp));
+								newMatches[t.imgIdx][t.queryIdx].push_back(t);
+							}
+					}
+			}
+
+			return newMatches;
+	}
+
 	vector<MyDMatch> convertDMatch(vector<DMatch> matches,
 		ImageContainer &train, ImageContainer &query,int train_idx){
 			vector<MyDMatch> newMatches;
@@ -283,6 +315,25 @@ private:
 
 		map<int,double> image_inliers;
 
+#if INSPECT
+		
+//Find inliesrs to the fundamentals
+		for(FundRes::iterator i = fundamentals.begin();
+			i != fundamentals.end(); ++i){
+				vector <MyDMatch> tmp;
+				int mean = sumInliers(matches[i->first],i->second.second,tmp);
+
+				if(best_fit < mean){
+					showMatches(db[i->first],query,tmp,i->second.first);
+					second_best = best_fit;
+					best_fit = mean;
+					img = i->first;
+				} else if (second_best < mean) {
+					second_best = mean;
+				}
+				image_inliers.insert(make_pair(i->first,mean));
+		}
+#else
 		//Find inliesrs to the fundamentals
 		for(FundRes::iterator i = fundamentals.begin();
 			i != fundamentals.end(); ++i){
@@ -292,12 +343,19 @@ private:
 				if(best_fit < mean){
 					second_best = best_fit;
 					best_fit = mean;
+					img = i->first;
 				} else if (second_best < mean) {
 					second_best = mean;
 				}
 				image_inliers.insert(make_pair(i->first,mean));
 		}
+#endif
 
+		if (best_fit >= mParams.inlierThresh){
+			return img;
+		}
+
+		img = ERROR;
 		//Remove all images with less than the second best number of inliers
 		map<int,ImType> better_matches;
 		for(map<int,double>::iterator i = image_inliers.begin(); i != image_inliers.end(); ++i){
@@ -309,13 +367,36 @@ private:
 		//Rematch the images
 		ImgMatches matches2 = doubleCheckMatches(better_matches,query);
 
+		cout << (matches2.empty() ? "empty" : "not empty") << endl;
+
 		//Find fundamental matricies
 		FundRes fundimentals = buildFundimentalMat(matches2);
 
 		best_fit = 0;
 
-		int mean_corr = 0;
+#if INSPECT
+		vector <MyDMatch> inliers,tmp;
+		Mat f;
+		//Find the image with the best number of inliers
+		for(FundRes::iterator i = fundimentals.begin();
+			i != fundimentals.end(); ++i){
 
+				int mean = sumInliers(matches2[i->first],i->second.second,tmp);
+
+				if(best_fit < mean){
+					inliers.clear();
+					inliers.insert(inliers.begin(),tmp.begin(),tmp.end());
+					f.release();
+					i->second.first.copyTo(f);
+					best_fit = mean;
+					img = i->first;
+				}
+		}
+
+		if(best_fit >= mParams.inlierThresh){
+			showMatches(db[img],query,inliers,f,true);
+		}
+#else
 		//Find the image with the best number of inliers
 		for(FundRes::iterator i = fundimentals.begin();
 			i != fundimentals.end(); ++i){
@@ -327,6 +408,7 @@ private:
 					img = i->first;
 				}
 		}
+#endif
 
 		return (best_fit >= mParams.inlierThresh ? img : ERROR);
 	}
@@ -387,9 +469,33 @@ private:
 
 		ImgMatches newMatches;
 
+		/*FlannBasedMatcher tmplshMatcher = FlannBasedMatcher(new flann::LshIndexParams(1,31,2));
+
+		map<int,int> tmpdb_to_db;
+
+		vector<Mat> ndb;
+
+		int index = 0;
+
+		for(map<int,ImType>::iterator i = db.begin(); i != db.end(); ++i){
+			tmpdb_to_db.insert(make_pair(index,i->first));
+			ndb.push_back(i->second.getDescriptor());
+			++index;
+		}
+
+		tmplshMatcher.add(ndb);
+		tmplshMatcher.train();
+		vector<vector<DMatch>> matches;
+		tmplshMatcher.knnMatch(query.getDescriptor(),matches,mParams.k);
+
+		KNNRes tmpRes = convertDMatch(matches,db,tmpdb_to_db,query);
+
+		FilteredRes tmpfRes = filterMatchingImages(tmpRes);
+		newMatches = tmpfRes.second;*/
+
 		for(map<int,ImType>::iterator i = db.begin(); i != db.end(); ++i){
 
-			vector<DMatch> received,good;
+			vector<DMatch> received;
 			tempm.match(query.getDescriptor(),i->second.getDescriptor(),received);
 
 			newMatches.insert(make_pair(i->first,convertDMatch(received,i->second,query,i->first)));
@@ -401,7 +507,7 @@ private:
 	/**
 	 * Sums the inliers 
 	 */
-	int sumInliers(vector<unsigned int> inliers){
+	int sumInliers(vector<unsigned int> &inliers){
 		int b = 0,index=0;
 		for(vector<unsigned int>::iterator i = inliers.begin();
 			i != inliers.end(); ++i){
@@ -409,5 +515,115 @@ private:
 		}
 		return b;
 	}
+
+#if INSPECT
+	int sumInliers(vector<MyDMatch> &matches, vector<unsigned int> &inliers, vector<MyDMatch> &fittingMatches){
+		int b = 0,index=0;
+		for(vector<unsigned int>::iterator i = inliers.begin();
+			i != inliers.end(); ++i){
+				b += *i;
+				if(*i){
+					fittingMatches.push_back(matches[index]);
+				}
+				index++;
+		}
+		return b;
+	}
+	void showMatches(ImType &db, ImageContainer &query, vector<MyDMatch> &inliers, Mat F,bool step = false){
+		ObjectScene objscene = buildObjSceneCorr(inliers);
+		if(!step){
+			if(db.loadImage()){
+				Mat r;
+				db.getMat(r);
+				KeyPoint p;
+				for(size_t i = 0; i < inliers.size(); ++i) {
+					p = inliers[i].train_kp;
+
+					circle(r,p.pt,2,Scalar(0,0,255),-1);
+					char buff[33];
+					itoa(i,buff,10);
+					putText(r,buff,Point(p.pt.x+4,p.pt.y+4),FONT_HERSHEY_COMPLEX,.5,
+						Scalar(255,13,255));
+				}
+				vector<Vec3f> eplines;
+				computeCorrespondEpilines(objscene.second,2,F,eplines);
+				for(vector<Vec3f>::iterator t = eplines.begin(); t != eplines.end(); ++t){
+					float y1 = (-1*((*t)[2]/(*t)[1]));
+					float y2 = (-1*((*t)[0]/(*t)[1])*db.imageSize().width)-((*t)[2]/(*t)[1]);
+					Point p1(0,y1),p2(db.imageSize().width,y2);
+					line(r,p1,p2,Scalar::all(-1));
+				}
+				imshow("DBInliers", r);
+			} else {
+				cout << "No DB image to show" << endl;
+			}
+			if(query.hasImage()){
+				Mat r;
+				query.getMat(r);
+				KeyPoint p;
+				for(size_t i = 0; i < inliers.size(); ++i) {
+					p = inliers[i].query_kp;
+
+					circle(r,p.pt,2,Scalar(0,0,255),-1);
+					char buff[33];
+					itoa(i,buff,10);
+					putText(r,buff,Point(p.pt.x+4,p.pt.y+4),FONT_HERSHEY_COMPLEX,.5,
+						Scalar(255,13,255));
+				}
+				vector<Vec3f> eplines;
+				computeCorrespondEpilines(objscene.first,1,F,eplines);
+				for(vector<Vec3f>::iterator t = eplines.begin(); t != eplines.end(); ++t){
+					float y1 = (-1*((*t)[2]/(*t)[1]));
+					float y2 = (-1*((*t)[0]/(*t)[1])*query.imageSize().width)-((*t)[2]/(*t)[1]);
+					Point p1(0,y1),p2(query.imageSize().width,y2);
+					line(r,p1,p2,Scalar::all(-1));
+				}
+				imshow("QueryInliers",r);
+			} else {
+				cout << "No Query Image to show" << endl;
+			}
+		} else if(query.hasImage() && db.loadImage()) {
+			Mat q,d;
+			
+			vector<Vec3f> eplinesdb,eplinesq;
+			computeCorrespondEpilines(objscene.first,1,F,eplinesq);
+			computeCorrespondEpilines(objscene.second,2,F,eplinesdb);
+			for(size_t t = 0; t < eplinesdb.size(); ++t){
+				db.getMat(d);
+				query.getMat(q);
+				
+				KeyPoint q_p = inliers[t].query_kp;
+				circle(q,q_p.pt,2,Scalar(0,0,255),-1);
+				char q_buff[33];
+				itoa(t,q_buff,10);
+				putText(q,q_buff,Point(q_p.pt.x+4,q_p.pt.y+4),FONT_HERSHEY_COMPLEX,.5,
+					Scalar(255,13,255));
+
+				KeyPoint d_p = inliers[t].train_kp;
+				circle(d,d_p.pt,2,Scalar(0,0,255),-1);
+				char d_buff[33];
+				itoa(t,d_buff,10);
+				putText(d,d_buff,Point(d_p.pt.x+4,d_p.pt.y+4),FONT_HERSHEY_COMPLEX,.5,
+					Scalar(255,13,255));
+
+				float q_y1 = (-1*(eplinesq[t][2]/eplinesq[t][1]));
+				float q_y2 = (-1*(eplinesq[t][0]/eplinesq[t][1])*query.imageSize().width)-(eplinesq[t][2]/eplinesq[t][1]);
+				Point q_p1(0,q_y1),q_p2(query.imageSize().width,q_y2);
+				line(q,q_p1,q_p2,Scalar(0,100,255));
+
+				float db_y1 = (-1*(eplinesdb[t][2]/eplinesdb[t][1]));
+				float db_y2 = (-1*(eplinesdb[t][0]/eplinesdb[t][1])*db.imageSize().width)-(eplinesdb[t][2]/eplinesdb[t][1]);
+				Point db_p1(0,db_y1),db_p2(db.imageSize().width,db_y2);
+				line(d,db_p1,db_p2,Scalar(0,100,255));
+
+				imshow("QueryInliers",q);
+				imshow("DBInliers", d);
+				waitKey();
+			}
+		}
+		
+		waitKey();
+	}
+#endif
 };
 
