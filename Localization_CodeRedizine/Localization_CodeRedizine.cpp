@@ -24,7 +24,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	LocalizationManager<MyMat,DBProvider<MyMat>,LSHMatching<MyMat>> manage("Images\\db_images_new.txt");
 	switch(option){
 	case VIDEO:
-		manage.performVideoTesting("Images\\3rd_floor_brown_se_stair.mp4","Images\\VideoTestResults.csv",true,15);
+		manage.performVideoTesting("Images\\3rd_floor_brown_se_stair.mp4","Images\\VideoTestResults.csv",100,true,15,28000);
 		break;
 	case SUBSAMPLE:
 		manage.performSubsample("SubSampleResults.csv");

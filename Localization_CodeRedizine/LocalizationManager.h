@@ -155,8 +155,9 @@ public:
 	* @param: the video file to open
 	* @param: the location to save the results to
 	* @param: the sampling frequency
+	* @param: the time in mils to seek to in the video
 	*/
-	void performVideoTesting(string vFile, string outFile, bool manualComparison = false, int sampleFrequency = 5){
+	void performVideoTesting(string vFile, string outFile, int minNumORB, bool manualComparison = false, int sampleFrequency = 5, double seek = 0){
 		VideoCapture vid(vFile.c_str());
 		if (vid.isOpened()){
 			if (manualComparison){
@@ -166,9 +167,11 @@ public:
 				namedWindow("Frame");
 				namedWindow("Match");
 				Mat frame,empty(20,20,CV_16S);
-				vid >> frame;
+#if INSPECT
+				vid.set(CV_CAP_PROP_POS_MSEC,seek);
+#endif
 				do{
-					++num_sampled;
+					vid >> frame;
 					MyMat img;
 					frame.copyTo(img);
 					//resize(img,img,Size(816,612));
@@ -176,14 +179,18 @@ public:
 					img.makeMask();
 					img.calcDescriptor();
 
+					if(img.getKeyPoints().size() < minNumORB) continue;
+
+					++num_sampled;
 					int img_num = match.find(img,db);
 
 					imshow("Frame",drawKeyPoints(img));
 
 					if(img_num <= ImgMatcherType::ERROR){
 						imshow("Match",empty);
+						cout << "no match: " << img_num << endl;
 					} else {
-						ImgType tmpimg = db.getImage(img_num);
+						ImgType tmpimg = db[img_num];
 
 						if(tmpimg.loadImage()){
 							imshow("Match",drawKeyPoints(tmpimg));
