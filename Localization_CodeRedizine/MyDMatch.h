@@ -16,6 +16,7 @@
 #include "opencv2\calib3d\calib3d.hpp"
 #include "opencv2\flann\flann.hpp"
 #include "opencv2\objdetect\objdetect.hpp"
+
 using namespace cv;
 using namespace std;
 class MyDMatch
@@ -33,5 +34,7 @@ public:
 
 	bool operator<(const MyDMatch m)const;
 
-	bool operator ==(const MyDMatch m);
+	bool operator==(const MyDMatch &m) const;
+
+	bool operator()(const MyDMatch &lhs, const MyDMatch &rhs);
 };

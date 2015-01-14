@@ -15,11 +15,15 @@ MyDMatch::MyDMatch(void){
 	distance = -1;
 }
 
-bool MyDMatch::operator <(const MyDMatch m)const{
+bool MyDMatch::operator<(const MyDMatch m)const{
 	return queryIdx < m.queryIdx;
 }
 
-bool MyDMatch::operator ==(const MyDMatch m){
+bool MyDMatch::operator()(const MyDMatch &lhs, const MyDMatch &rhs){
+	return lhs.queryIdx < rhs.queryIdx;
+}
+
+bool MyDMatch::operator==(const MyDMatch &m) const{
 	bool match = imgIdx == m.imgIdx;
 	match &= (queryIdx == m.queryIdx);
 	match &= (trainIdx == m.trainIdx);
