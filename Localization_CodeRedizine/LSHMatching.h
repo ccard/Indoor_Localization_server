@@ -32,6 +32,7 @@ public:
 			mParams.confidence = 0.99;
 			mParams.pointdiff_maxDist = 0.8;
 			mParams.fund_f_maxDist = 0;
+			mParams.geo_k = 6;
 			mParams.compactResults = false;
 			mParams._init = true;//Ensures that these params are defined only once
 		}
@@ -290,7 +291,7 @@ private:
 					}
 			}
 
-			ImgMatches geoFiltered = geometricFiltering(imgIndex,6);
+			ImgMatches geoFiltered = geometricFiltering(imgIndex,mParams.geo_k);
 
 			size_t mostBins = 0, secondMost = 0, thirdMost = 0,fourthMost=0;
 			for(ImgMatches::iterator i = geoFiltered.begin();
@@ -342,16 +343,17 @@ private:
 
 		ImgMatches newMatches;
 
+		map<int, double> trackerDefault;
+
+		for(int i_k = 0; i_k < k; ++i_k){
+			trackerDefault.insert(make_pair(i_k,100000.0));
+		}
+
 		for(ImgMatches::iterator i = im.begin(); i != im.end(); ++i){ 
 			for(vector<MyDMatch>::iterator ref = i->second.begin(); ref != i->second.end(); ++ref){
 				map<int, MyDMatch> kClosestq,kClosestdb;
 
-				map<int, double> distTrakerq,distTrakerdb;
-
-				for(int i_k = 0; i_k < k; ++i_k){
-					distTrakerq.insert(make_pair(i_k,100000.0));
-					distTrakerdb.insert(make_pair(i_k,100000.0));
-				}
+				map<int, double> distTrakerq(trackerDefault),distTrakerdb(trackerDefault);
 
 				//Finds the k closest points to the reference query and database keypoint
 				for(vector<MyDMatch>::iterator comp = i->second.begin(); comp != i->second.end(); ++comp){
@@ -481,7 +483,7 @@ private:
 
 		if(matches.size() == 0) return -1;
 
-		FundRes fundamentals = buildFundimentalMat(matches);//buildHomographies(matches);
+		FundRes fundamentals = buildFundimentalMat(matches);
 
 		double best_fit = 0,second_best = 0;
 		int img = ERROR;
@@ -489,8 +491,7 @@ private:
 		map<int,double> image_inliers;
 
 #if INSPECT
-		
-//Find inliesrs to the fundamentals
+		//Find inliesrs to the fundamentals
 		for(FundRes::iterator i = fundamentals.begin();
 			i != fundamentals.end(); ++i){
 				vector <MyDMatch> tmp;
@@ -631,35 +632,33 @@ private:
 
 		ImgMatches newMatches;
 
-		map<int,vector<vector<DMatch>>> tmpDMatch;
-		
-		for(map<int,ImType>::iterator i = db.begin(); i != db.end(); ++i){
+		if(!mParams.compactResults){
+			map<int,vector<vector<DMatch>>> tmpDMatch;
 
-			vector<vector<DMatch>> received;
-			tempm.knnMatch(query.getDescriptor(),i->second.getDescriptor(),received,mParams.k);
+			for(map<int,ImType>::iterator i = db.begin(); i != db.end(); ++i){
+				vector<vector<DMatch>> received;
+				tempm.knnMatch(query.getDescriptor(),i->second.getDescriptor(),received,mParams.k);
 
-			tmpDMatch.insert(make_pair(i->first,received));
+				tmpDMatch.insert(make_pair(i->first,received));
+			}
 
+			KNNRes tmpRes = convertDMatch(tmpDMatch,db,query);
+
+			FilteredRes tmpfRes = filterMatchingImages(tmpRes);
+			newMatches = tmpfRes.second;
+
+			return newMatches;
+		} else {
+
+			for(map<int,ImType>::iterator i = db.begin(); i != db.end(); ++i){
+				vector<DMatch> received;
+				tempm.match(query.getDescriptor(),i->second.getDescriptor(),received);
+
+				newMatches.insert(make_pair(i->first,convertDMatch(received,i->second,query,i->first)));
+			}
+
+			return geometricFiltering(newMatches,3);
 		}
-
-		KNNRes tmpRes = convertDMatch(tmpDMatch,db,query);
-
-		FilteredRes tmpfRes = filterMatchingImages(tmpRes);
-		newMatches = tmpfRes.second;
-
-		return newMatches;
-
-		/*for(map<int,ImType>::iterator i = db.begin(); i != db.end(); ++i){
-
-			vector<DMatch> received;
-			tempm.match(query.getDescriptor(),i->second.getDescriptor(),received);
-
-			newMatches.insert(make_pair(i->first,convertDMatch(received,i->second,query,i->first)));
-
-		}*/
-
-
-		return geometricFiltering(newMatches,3);
 	}
 
 	/**
