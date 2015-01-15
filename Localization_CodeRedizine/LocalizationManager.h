@@ -124,7 +124,7 @@ public:
 					results.push_back(make_pair(i,make_pair(j->getName(),ndb[img].getName())));
 				}
 			}
-			delete ndb;
+			
 			testSet.clear();
 		}
 #endif
