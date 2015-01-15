@@ -24,7 +24,7 @@
 	#define _MATCHPARAMS
 	//This is the structure that contains the matching params
 	static struct MatchParams{
-		int k,inlierThresh;
+		int k,inlierThresh,geo_k;
 		double fund_f_maxDist,confidence,pointdiff_maxDist;
 		bool compactResults,_init;
 	} mParams;
