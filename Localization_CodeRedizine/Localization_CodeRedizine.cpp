@@ -19,7 +19,7 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 #if DEBUG
 	//Flags for what to run
-	int option = VIDEO;
+	int option = SUBSAMPLE;
 
 	LocalizationManager<MyMat,DBProvider<MyMat>,LSHMatching<MyMat>> manage("Images\\db_images_new.txt");
 	switch(option){
