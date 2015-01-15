@@ -66,7 +66,7 @@ public:
 		return false;
 	}
 
-	void performSubsample(string file, int matchType = LSHMATCHER){
+	void performSubsample(string file){
 		cout << "Performing subsample testing. The results will be outputed to '" << file << "' in csv format." << endl;
 		cout << "The format will be 'group,query_file_name,guessed_file_name'." << endl;
 		vector<set<int>> testSets = generateTestingSet(30,5);
@@ -79,34 +79,25 @@ public:
 #pragma omp for
 			for(int i = 0; i < testSets.size(); ++i){
 				cout << "Running group: " << i << endl;
-				ImageProvider<ImgType> *ndb;
+				ImgProviderType ndb;
 				vector<ImgType> testSet;
 #pragma omp critical
 				{
-					createTestingSet(testSets[i],testSet,(*ndb));
+					createTestingSet(testSets[i],testSet,ndb);
 				}
 				ImgMatcherType nmatch;
-				nmatch << (*ndb);
+				nmatch << ndb;
 				nmatch.train();
-				/*switch(matchType){
-				case LSHMATCHER:
-					nmatch = new LSHMatching<ImgType>();
-					nmatch->operator<< (*ndb);
-					nmatch->train();
-					break;
-				default:
-					ASSERT(false,"There is no matching type: "<<matchType);
-				}*/
 
 				for(vector<ImgType>::iterator j = testSet.begin(); j != testSet.end(); ++j){
-					int img = nmatch.find(*j,(*ndb));
+					int img = nmatch.find(*j,ndb);
 					if (img <= ImgMatcherType::ERROR){
 						privres.push_back(make_pair(i,make_pair(j->getName(),"no match")));
 					} else {
-						privres.push_back(make_pair(i,make_pair(j->getName(),ndb->getImage(img).getName())));
+						privres.push_back(make_pair(i,make_pair(j->getName(),ndb[img].getName())));
 					}
 				}
-				delete ndb;
+
 				testSet.clear();
 			}
 #pragma omp critical
@@ -118,19 +109,19 @@ public:
 		cout << "Starting sequential tests...." << endl;
 		for(size_t i = 0; i < testSets.size(); ++i){
 			cout << "Running group: " << i << endl;
-			ImageProvider<ImgType> *ndb;
+			ImgProviderType ndb;
 			vector<ImgType> testSet;
-			createTestingSet(testSets[i],testSet,(*ndb));
+			createTestingSet(testSets[i],testSet,ndb);
 			ImgMatcherType nmatch;
-			nmatch << (*ndb);
+			nmatch << ndb;
 			nmatch.train();
 
 			for(vector<ImgType>::iterator j = testSet.begin(); j != testSet.end(); ++j){
-				int img = nmatch.find(*j,(*ndb));
+				int img = nmatch.find(*j,ndb);
 				if (img <= ImgMatcherType::ERROR){
 					results.push_back(make_pair(i,make_pair(j->getName(),"no match")));
 				} else {
-					results.push_back(make_pair(i,make_pair(j->getName(),ndb->getImage(img).getName())));
+					results.push_back(make_pair(i,make_pair(j->getName(),ndb[img].getName())));
 				}
 			}
 			delete ndb;
@@ -297,7 +288,7 @@ private:
 	}
 
 #if DEBUG
-	void createTestingSet(set<int> indicies, vector<ImgType> &testSet, ImageProvider<ImgType> &newdb){
+	void createTestingSet(set<int> indicies, vector<ImgType> &testSet, ImgProviderType &newdb){
 		for(size_t i = 0; i < db.size(); ++i){
 			if(indicies.find(i) != indicies.end()){
 				testSet.push_back(db.getImage(i));
