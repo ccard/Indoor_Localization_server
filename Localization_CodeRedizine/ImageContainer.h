@@ -56,7 +56,7 @@
 		//Defines the debug flag to determine if other classes should compile in debug mode
 #ifndef INSPECT
 	//1 for true 0 for false
-#define INSPECT 1
+#define INSPECT 0
 #endif
 
 	//Defines custom assert object for asserts at run time this code was taken from 
