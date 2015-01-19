@@ -499,6 +499,7 @@ private:
 
 				if(best_fit < mean){
 					showMatches(db[i->first],query,tmp,i->second.first);
+					inspectEpipole(db[i->first],query,tmp,i->second.first);
 					second_best = best_fit;
 					best_fit = mean;
 					img = i->first;
@@ -780,6 +781,65 @@ private:
 		}
 		
 		waitKey();
+	}
+	void inspectEpipole(ImType &db, ImageContainer &query, vector<MyDMatch> &inliers, Mat F){
+		ObjectScene objscene = buildObjSceneCorr(inliers);
+		SVD svd(F,SVD::FULL_UV);
+		if(db.loadImage()){
+			Mat r;
+			db.getMat(r);
+			KeyPoint p;
+			for(size_t i = 0; i < inliers.size(); ++i) {
+				p = inliers[i].train_kp;
+
+				circle(r,p.pt,2,Scalar(0,0,255),-1);
+				char buff[33];
+				itoa(i,buff,10);
+				putText(r,buff,Point(p.pt.x+4,p.pt.y+4),FONT_HERSHEY_COMPLEX,.5,
+					Scalar(255,13,255));
+			}
+			vector<Vec3f> eplines;
+			computeCorrespondEpilines(objscene.second,2,F,eplines);
+			for(vector<Vec3f>::iterator t = eplines.begin(); t != eplines.end(); ++t){
+				float y1 = (-1*((*t)[2]/(*t)[1]));
+				float y2 = (-1*((*t)[0]/(*t)[1])*db.imageSize().width)-((*t)[2]/(*t)[1]);
+				Point p1(0,y1),p2(db.imageSize().width,y2);
+				line(r,p1,p2,Scalar::all(-1));
+			}
+			imshow("DBInliers", r);
+		} else {
+			cout << "No DB image to show" << endl;
+		}
+		if(query.hasImage()){
+			Mat r;
+			query.getMat(r);
+			KeyPoint p;
+			for(size_t i = 0; i < inliers.size(); ++i) {
+				p = inliers[i].query_kp;
+
+				circle(r,p.pt,2,Scalar(0,0,255),-1);
+				char buff[33];
+				itoa(i,buff,10);
+				putText(r,buff,Point(p.pt.x+4,p.pt.y+4),FONT_HERSHEY_COMPLEX,.5,
+					Scalar(255,13,255));
+			}
+			vector<Vec3f> eplines;
+			computeCorrespondEpilines(objscene.first,1,F,eplines);
+			for(vector<Vec3f>::iterator t = eplines.begin(); t != eplines.end(); ++t){
+				float y1 = (-1*((*t)[2]/(*t)[1]));
+				float y2 = (-1*((*t)[0]/(*t)[1])*query.imageSize().width)-((*t)[2]/(*t)[1]);
+				Point p1(0,y1),p2(query.imageSize().width,y2);
+				line(r,p1,p2,Scalar::all(-1));
+			}
+			Mat ep = svd.u.col(2)/svd.u.at<double>(2,2);
+			circle(r,Point(ep.at<double>(0,0),ep.at<double>(0,1)),4,Scalar(0,0,255),2);
+			imshow("QueryInliers",r);
+		} else {
+			cout << "No Query Image to show" << endl;
+		}
+
+		cout << svd.u.col(2)/svd.u.at<double>(2,2) << endl;
+		
 	}
 #endif
 };
