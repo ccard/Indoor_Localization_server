@@ -54,7 +54,7 @@ public:
 	}*/
 
 	int operator ==(const ImageContainer &lhs){
-		return match->find(lhs,(*db));
+		return match.find(lhs,db);
 	}
 
 	const ImgProviderType getDB(){
@@ -63,7 +63,28 @@ public:
 
 #if DEBUG
 	bool performTestingStats(ImgProviderType &pr,string file){
-		return false;
+
+		map<string, string> results;
+
+		for (int i = 0; i < pr.size(); ++i){
+			int img = match.find(pr[i], db);
+
+			if (match::ERROR >= img){
+				results.insert(make_pair(pr[i].getName(), "no match"));
+			}
+			else {
+				results.insert(make_pair(pr[i].getName(), db[img].getName()));
+			}
+		}
+
+		ofstream out(file.c_str());
+
+		for (map<string, string>::iterator i = results.begin(); i != results.end(); ++i){
+			out << i->first << "," << i->second << endl;
+		}
+
+		out.close();
+		return true;
 	}
 
 	void performSubsample(string file){
