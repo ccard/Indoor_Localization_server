@@ -69,7 +69,7 @@ public:
 		for (int i = 0; i < pr.size(); ++i){
 			int img = match.find(pr[i], db);
 
-			if (match::ERROR >= img){
+			if (ImgMatcherType::ERROR >= img){
 				results.insert(make_pair(pr[i].getName(), "no match"));
 			}
 			else {
