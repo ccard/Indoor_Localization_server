@@ -77,7 +77,7 @@ turned on:
 &nbsp;&nbsp;To compile in Visual Studio&reg; simply build in the desired mode, _Release_ is the perfered mode.
 
 ## Linux ##
-&nbsp;&nbsp;___Not Supported__ at this time.
+&nbsp;&nbsp;__Not Supported__ at this time.
 
 ## VS Compilation ##
 &nbsp;&nbsp;You should only have to do a build/rebuild on the project and it should all work if you set up the [environment](#environment) correctly.
