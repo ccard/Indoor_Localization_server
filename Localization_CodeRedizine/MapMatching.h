@@ -72,7 +72,7 @@ public:
 		if(knnMatch(query,db,matches)) {
 			FilteredRes filteredImgs = filterMatchingImages(matches);
 			if(filteredImgs.first){
-				return verify(filteredImgs.second,db,query);
+				return verify(filteredImgs.second,db,query,r);
 			} else {
 				return ERROR;
 			}
@@ -597,6 +597,8 @@ private:
 
 		if(matches.size() == 0) return -1;
 
+		Rat tempR;
+
 		FundRes fundamentals = buildFundimentalMat(matches);
 
 		double best_fit = 0,second_best = 0;
@@ -614,6 +616,7 @@ private:
 				if(best_fit < mean){
 					showMatches(db[i->first],query,tmp,i->second.first);
 					inspectEpipole(db[i->first],query,tmp,i->second.first);
+					tempR = findRandT(i->second.first,tmp[0]);
 					second_best = best_fit;
 					best_fit = mean;
 					img = i->first;
@@ -626,10 +629,11 @@ private:
 		//Find inliesrs to the fundamentals
 		for(FundRes::iterator i = fundamentals.begin();
 			i != fundamentals.end(); ++i){
-
-				int mean = sumInliers(i->second.second);
+				vector <MyDMatch> tmp;
+				int mean = sumInliers(matches[i->first],i->second.second,tmp);
 
 				if(best_fit < mean){
+					tempR = findRandT(i->second.first,tmp[0]);
 					second_best = best_fit;
 					best_fit = mean;
 					img = i->first;
@@ -639,7 +643,7 @@ private:
 				image_inliers.insert(make_pair(i->first,mean));
 		}
 #endif
-
+		r = (best_fit >= mParams.inlierThresh ? tempR : r);
 		if (best_fit >= mParams.inlierThresh){
 			return img;
 		}
@@ -669,6 +673,7 @@ private:
 				int mean = sumInliers(matches2[i->first],i->second.second,tmp);
 
 				if(best_fit < mean){
+					tempR = findRandT(i->second.first,tmp[0]);
 					showMatches(db[i->first],query,tmp,i->second.first,true);
 					best_fit = mean;
 					img = i->first;
@@ -678,23 +683,114 @@ private:
 		//Find the image with the best number of inliers
 		for(FundRes::iterator i = fundimentals.begin();
 			i != fundimentals.end(); ++i){
-
-				int mean = sumInliers(i->second.second);
+				vector <MyDMatch> tmp;
+				int mean = sumInliers(matches[i->first],i->second.second,tmp);
 
 				if(best_fit < mean){
+					tempR = findRandT(i->second.first,tmp[0]);
 					best_fit = mean;
 					img = i->first;
 				}
 		}
 #endif
-
+		r = (best_fit >= mParams.inlierThresh ? tempR : r);
 		return (best_fit >= mParams.inlierThresh ? img : ERROR);
 	}
 
 	/**
+	 * Find the (R)otation and (t)ranslation matricies from F
 	 *
+	 * @param: the fundamental matrix
+	 *
+	 * @return: the Rat object with the first being R and second being t
 	 */
-	Point findRandT(
+	Rat findRandT(Mat F, MyDMatch &dm){
+		SVD svd(F,SVD::MODIFY_A);
+		Matx33d w (0,-1,0,
+					1,0,0,
+					0,0,1);
+		Mat_<double> R1 = svd.u*Mat(w)*svd.vt;
+		if(determinant(R1) < 0){
+			R1 = -1*R1;
+		}
+		Mat_<double> t1 = svd_u.col(2);
+		Mat_<double> R2 = svd.u*Mat(w).t()*svd.vt;
+		if(determinant(R2) < 0){
+			R2 = -1*R2;
+		}
+		Mat_<double> t2 = -svd_u.col(2);
+
+		Matx34d M1(1,0,0,0,
+				   0,1,0,0,
+				   0,0,1,0);
+
+		vector<Matx44d> M2s;
+
+		Matx44d M2_11(R1(0,0),R1(0,1),R1(0,2),t1(0),
+					  R1(1,0),R1(1,1),R1(1,2),t1(1),
+					  R1(2,0),R1(2,1),R1(2,2),t1(2),
+					  0,0,0,1);
+		M2_11.inv();
+		M2s.push_back(M2_11);
+
+		Matx44d M2_12(R1(0,0),R1(0,1),R1(0,2),t2(0),
+					  R1(1,0),R1(1,1),R1(1,2),t2(1),
+					  R1(2,0),R1(2,1),R1(2,2),t2(2),
+					  0,0,0,1);
+		M2_12.inv();
+		M2s.push_back(M2_12);
+
+		Matx44d M2_21(R2(0,0),R2(0,1),R2(0,2),t1(0),
+					  R2(1,0),R2(1,1),R2(1,2),t1(1),
+					  R2(2,0),R2(2,1),R2(2,2),t1(2),
+					  0,0,0,1);
+		M2_21.inv();
+		M2s.push_back(M2_21);
+
+		Matx44d M2_22(R2(0,0),R2(0,1),R2(0,2),t2(0),
+					  R2(1,0),R2(1,1),R2(1,2),t2(1),
+					  R2(2,0),R2(2,1),R2(2,2),t2(2),
+					  0,0,0,1);
+		M2_22.inv();
+		M2s.push_back(M2_22);
+
+		Matx13d q(dm.query_kp.pt.x,dm.query_kp.pt.y,1);
+		Matx13d d(dm.train_kp.pt.x,dm.train_kp.pt.y,1);
+
+		int index = 0;
+
+		for(vector<Mat44d>::iterator i = M2s.begin(); i != M2s.end(); ++i){
+			Matx34d M2 = i->rowRange(0,3);
+			Matx24d A;
+			A.row(0) = d*M1;
+			A.row(1) = q*M2;
+
+			SVD a(Mat(A),SVD::MODIFY_A);
+			Mat v = a.vt;
+			v.t();
+			Mat_<double> P = v.col(3);
+			Mat_<double> P1est = P/P(3);
+			Mat_<double> P2est = (*i)*P1est;
+
+			if (P1est(3) > 0 && P2est(3) > 0){
+				break;
+			}
+			++index;
+		}
+
+		switch(index){
+		case 0:
+			return make_pair(R1,t1);
+		case 1:
+			return make_pair(R1,t2);
+		case 2:
+			return make_pair(R2,t1);
+		case 3:
+			return make_pair(R2,t2);
+		default:
+			return make_pair(Mat(),Mat());
+		}
+	}
 
 	/**
 	* This Function builds the fundimental matricies that relate one image to another
@@ -793,7 +889,6 @@ private:
 		return b;
 	}
 
-#if INSPECT
 	int sumInliers(vector<MyDMatch> &matches, vector<unsigned int> &inliers, vector<MyDMatch> &fittingMatches){
 		int b = 0,index=0;
 		for(vector<unsigned int>::iterator i = inliers.begin();
@@ -806,6 +901,8 @@ private:
 		}
 		return b;
 	}
+
+#if INSPECT
 	void showMatches(ImType &db, ImageContainer &query, vector<MyDMatch> &inliers, Mat F,bool step = false){
 		ObjectScene objscene = buildObjSceneCorr(inliers);
 		if(!step){
