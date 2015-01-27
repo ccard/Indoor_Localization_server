@@ -281,7 +281,21 @@ public:
 
 #if INSPECT
 	void evaluateMatches(string imageFile){
+		MyMat q;
+		Mat r = imread(imagFile);
+		r.copyTo(q);
+		resize(q,q,Size(612,816));
+		q.makeMask();
+		q.initDescriptor();
+		q.calcDescriptor();
 
+		int image = match.find(q,db);
+		namedWindow("Query",CV_WINDOW_KEEPRATIO);
+		namedWindow("Retrieved",CV_WINDOW_KEEPRATIO);
+		if(image > ImgMatcherType::ERROR){
+			imshow("Query",q);
+			imshow("Retrieved",db[image]);
+		}
 	}
 
 	void evaluateMatches(ImgProviderType &images){
