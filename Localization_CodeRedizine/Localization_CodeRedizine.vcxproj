@@ -166,6 +166,7 @@
     <ClInclude Include="ImageProvider.h" />
     <ClInclude Include="LocalizationManager.h" />
     <ClInclude Include="LSHMatching.h" />
+    <ClInclude Include="MapMatching.h" />
     <ClInclude Include="Matcher.h" />
     <ClInclude Include="MatProvider.h" />
     <ClInclude Include="MyDMatch.h" />
@@ -181,6 +182,7 @@
     <ClCompile Include="LocalizationManager.cpp" />
     <ClCompile Include="Localization_CodeRedizine.cpp" />
     <ClCompile Include="LSHMatching.cpp" />
+    <ClCompile Include="MapMatching.cpp" />
     <ClCompile Include="Matcher.cpp" />
     <ClCompile Include="MatProvider.cpp" />
     <ClCompile Include="MyDMatch.cpp" />
