@@ -1,7 +1,8 @@
 #pragma once
 /**
 * Author: Chris Card
-* This class is the matching class that will be used to construct the map
+* This class is the matching class that will be used to construct the map and has find method that returns the rotation
+* and translation
 */
 
 #include "Matcher.h"
@@ -616,7 +617,7 @@ private:
 				if(best_fit < mean){
 					showMatches(db[i->first],query,tmp,i->second.first);
 					inspectEpipole(db[i->first],query,tmp,i->second.first);
-					tempR = findRandT(i->second.first,tmp[0]);
+					tempR = findRandT(i->second.first,tmp[0],db[i->first].imageSize());
 					second_best = best_fit;
 					best_fit = mean;
 					img = i->first;
@@ -633,7 +634,7 @@ private:
 				int mean = sumInliers(matches[i->first],i->second.second,tmp);
 
 				if(best_fit < mean){
-					tempR = findRandT(i->second.first,tmp[0]);
+					tempR = findRandT(i->second.first,tmp[0],db[i->first].imageSize());
 					second_best = best_fit;
 					best_fit = mean;
 					img = i->first;
@@ -673,7 +674,7 @@ private:
 				int mean = sumInliers(matches2[i->first],i->second.second,tmp);
 
 				if(best_fit < mean){
-					tempR = findRandT(i->second.first,tmp[0]);
+					tempR = findRandT(i->second.first,tmp[0],db[i->first].imageSize());
 					showMatches(db[i->first],query,tmp,i->second.first,true);
 					best_fit = mean;
 					img = i->first;
@@ -687,7 +688,7 @@ private:
 				int mean = sumInliers(matches[i->first],i->second.second,tmp);
 
 				if(best_fit < mean){
-					tempR = findRandT(i->second.first,tmp[0]);
+					tempR = findRandT(i->second.first,tmp[0],db[i->first].imageSize());
 					best_fit = mean;
 					img = i->first;
 				}
@@ -704,8 +705,17 @@ private:
 	 *
 	 * @return: the Rat object with the first being R and second being t
 	 */
-	Rat findRandT(Mat F, MyDMatch &dm){
-		SVD svd(F,SVD::MODIFY_A);
+	Rat findRandT(Mat F, MyDMatch &dm,Size s){
+		//Based on camera rebel t2i 
+		Matx33d temp_k(2789.596,0,s.width/2,
+				  0,2789.596,s.height/2,
+				  0,0,1);
+		Mat k(temp_k);
+		Mat E = k.t()*F*k; //Essential matrix
+
+		//Singular Value Decomposition(SVD) of the essential matrix to get rotation and
+		//Translation matricies
+		SVD svd(E.clone(),SVD::MODIFY_A);
 		Matx33d w (0,-1,0,
 					1,0,0,
 					0,0,1);
@@ -713,66 +723,66 @@ private:
 		if(determinant(R1) < 0){
 			R1 = -1*R1;
 		}
-		Mat_<double> t1 = svd_u.col(2);
+		Mat_<double> t1 = svd.u.col(2);
 		Mat_<double> R2 = svd.u*Mat(w).t()*svd.vt;
 		if(determinant(R2) < 0){
 			R2 = -1*R2;
 		}
-		Mat_<double> t2 = -svd_u.col(2);
+		Mat_<double> t2 = -svd.u.col(2);
 
-		Matx34d M1(1,0,0,0,
+		//This froms the reference matrix for the camera of the database image
+		Matx34d M1_T(1,0,0,0,
 				   0,1,0,0,
 				   0,0,1,0);
 
-		vector<Matx44d> M2s;
+		Mat M1(M1_T);
+		vector<Mat> M2s;
 
+		//Matricies represent the H matrix from database camera to the query camera
 		Matx44d M2_11(R1(0,0),R1(0,1),R1(0,2),t1(0),
 					  R1(1,0),R1(1,1),R1(1,2),t1(1),
 					  R1(2,0),R1(2,1),R1(2,2),t1(2),
 					  0,0,0,1);
-		M2_11.inv();
-		M2s.push_back(M2_11);
+		M2s.push_back(Mat(M2_11));
 
 		Matx44d M2_12(R1(0,0),R1(0,1),R1(0,2),t2(0),
 					  R1(1,0),R1(1,1),R1(1,2),t2(1),
 					  R1(2,0),R1(2,1),R1(2,2),t2(2),
 					  0,0,0,1);
-		M2_12.inv();
-		M2s.push_back(M2_12);
+		M2s.push_back(Mat(M2_12).clone());
 
 		Matx44d M2_21(R2(0,0),R2(0,1),R2(0,2),t1(0),
 					  R2(1,0),R2(1,1),R2(1,2),t1(1),
 					  R2(2,0),R2(2,1),R2(2,2),t1(2),
 					  0,0,0,1);
-		M2_21.inv();
-		M2s.push_back(M2_21);
+		M2s.push_back(Mat(M2_21));
 
 		Matx44d M2_22(R2(0,0),R2(0,1),R2(0,2),t2(0),
 					  R2(1,0),R2(1,1),R2(1,2),t2(1),
 					  R2(2,0),R2(2,1),R2(2,2),t2(2),
 					  0,0,0,1);
-		M2_22.inv();
-		M2s.push_back(M2_22);
+		M2s.push_back(Mat(M2_22));
 
-		Matx13d q(dm.query_kp.pt.x,dm.query_kp.pt.y,1);
-		Matx13d d(dm.train_kp.pt.x,dm.train_kp.pt.y,1);
+		//The points to test the H matrix
+		vector<Point2f> q,d;
+		q.push_back(dm.query_kp.pt);
+		d.push_back(dm.train_kp.pt);
 
 		int index = 0;
 
-		for(vector<Mat44d>::iterator i = M2s.begin(); i != M2s.end(); ++i){
-			Matx34d M2 = i->rowRange(0,3);
-			Matx24d A;
-			A.row(0) = d*M1;
-			A.row(1) = q*M2;
+		for(vector<Mat>::iterator i = M2s.begin(); i != M2s.end(); ++i){
+			Mat M2((*i), Range(0,3),Range(0,4));//Recovers a 3x4 matrix from i
+			Mat recon;
+			triangulatePoints(k*M1,k*M2,d,q,recon);//recontstructs the 3d points
 
-			SVD a(Mat(A),SVD::MODIFY_A);
-			Mat v = a.vt;
-			v.t();
-			Mat_<double> P = v.col(3);
-			Mat_<double> P1est = P/P(3);
-			Mat_<double> P2est = (*i)*P1est;
+			//Inversts H from camera 1 to 2 to 2 to 1
+			Mat M2_i = i->inv();
 
-			if (P1est(3) > 0 && P2est(3) > 0){
+			Mat_<double> P1est = recon.col(0);//The db point 
+			Mat_<double> P2est = M2_i*P1est;//the db point translated to the query camera
+
+			//if both points are in front of both cameras then we found the rotation and translation
+			if (P1est(2) > 0 && P2est(2) > 0){
 				break;
 			}
 			++index;

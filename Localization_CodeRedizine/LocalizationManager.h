@@ -43,15 +43,11 @@ class LocalizationManager
 public:
 	const static int LSHMATCHER = 1;
 
-	LocalizationManager(string file,int matchType=LSHMATCHER){
-		if(!init(file,matchType)){
+	LocalizationManager(string file){
+		if(!init(file)){
 			ASSERT(false,"Failed to initialize");
 		}
 	}
-	/*~LocalizationManager(){
-		delete db;
-		delete match;
-	}*/
 
 	int operator ==(const ImageContainer &lhs){
 		return match.find(lhs,db);
@@ -307,7 +303,7 @@ private:
 	ImgProviderType db;
 	ImgMatcherType match;
 
-	bool init(string file,int matchType){
+	bool init(string file){
 		if(!loadDB(file)){
 			return false;
 		}
