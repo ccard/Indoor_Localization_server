@@ -52,7 +52,15 @@ public:
 	ImgMatch matchImage(ImgType q){
 		Rat r;
 		int i = match.find(q,db,r);
+#if INSPECT
 		cout << "R: " << r.first << endl << "t: " << r.second << endl;
+		namedWindow("QueryImg",CV_WINDOW_KEEPRATIO);
+		namedWindow("DBImg",CV_WINDOW_KEEPRATIO);
+		imshow("QueryImg",q);
+		if(db[i].loadImage()){
+			imshow("DBImg",db[i]);
+		}
+#endif
 		return make_pair(i,r);
 	}
 
