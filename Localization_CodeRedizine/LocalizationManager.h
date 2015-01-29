@@ -275,10 +275,9 @@ public:
 		vid.release();
 	}
 
-#if INSPECT
 	void evaluateMatches(string imageFile){
 		MyMat q;
-		Mat r = imread(imagFile);
+		Mat r = imread(imageFile);
 		r.copyTo(q);
 		resize(q,q,Size(612,816));
 		q.makeMask();
@@ -290,14 +289,18 @@ public:
 		namedWindow("Retrieved",CV_WINDOW_KEEPRATIO);
 		if(image > ImgMatcherType::ERROR){
 			imshow("Query",q);
-			imshow("Retrieved",db[image]);
+			if(db[image].loadImage()){
+			Mat rt;
+			db[image].getMat(rt);
+			imshow("Retrieved",rt);
+			}
+			waitKey();
 		}
 	}
 
 	void evaluateMatches(ImgProviderType &images){
 
 	}
-#endif
 #endif
 private:
 	ImgProviderType db;
@@ -322,9 +325,9 @@ private:
 	void createTestingSet(set<int> indicies, vector<ImgType> &testSet, ImgProviderType &newdb){
 		for(size_t i = 0; i < db.size(); ++i){
 			if(indicies.find(i) != indicies.end()){
-				testSet.push_back(db.getImage(i));
+				testSet.push_back(db[i]);
 			} else {
-				newdb.addImage(db.getImage(i));
+				newdb.addImage(db[i]);
 			}
 		}
 	}
