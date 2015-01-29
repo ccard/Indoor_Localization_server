@@ -56,7 +56,7 @@
 		//Defines the debug flag to determine if other classes should compile in debug mode
 #ifndef INSPECT
 	//1 for true 0 for false
-#define INSPECT 1
+#define INSPECT 0
 #endif
 
 	//Defines custom assert object for asserts at run time this code was taken from 
@@ -99,6 +99,13 @@ public:
 		keyPoints = kps;
 	}
 
+	ImageContainer(const ImageContainer &o){
+		init();
+		this->name = o.name;
+		o.descriptor.copyTo(this->descriptor);
+		keyPoints = vector<KeyPoint>(o.keyPoints);
+	}
+
 	~ImageContainer(){
 		descriptor.release();
 		keyPoints.clear();
@@ -136,6 +143,9 @@ public:
 	 */
 	virtual bool hasImage() = 0;
 
+	/**
+	 * Detrimines if the ImageContainer has an image to load and loads it.
+	 */
 	virtual bool loadImage() = 0;
 
 	virtual void getMat(Mat &mat) = 0;

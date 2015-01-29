@@ -25,6 +25,10 @@ public:
 
 	MyMat(string img_file,Mat descriptor, vector<KeyPoint> kps): ImageContainer(img_file,descriptor, kps){}
 
+	MyMat(const MyMat &o): ImageContainer(o){
+		o.copyTo(*this);
+	}
+
 	void initDescriptor();
 
 	void makeMask(int maskType = ImageContainer::CIRCLE, int side_radius = 9, int side2 = 16);

@@ -8,6 +8,8 @@ public:
 
 	DBImage(string img_file,Mat descriptor, vector<KeyPoint> kps): ImageContainer(img_file,descriptor, kps){}
 
+	DBImage(const DBImage &o): ImageContainer(o){}
+
 	void makeMask(int maskType = ImageContainer::CIRCLE, int side_radius = 9, int side2 = 16);
 
 	/**
