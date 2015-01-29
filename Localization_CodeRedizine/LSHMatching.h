@@ -832,6 +832,7 @@ private:
 				line(r,p1,p2,Scalar::all(-1));
 			}
 			Mat ep = svd.u.col(2)/svd.u.at<double>(2,2);
+			ep = ep.t();
 			circle(r,Point(ep.at<double>(0,0),ep.at<double>(0,1)),4,Scalar(0,0,255),2);
 			imshow("QueryInliers",r);
 		} else {
