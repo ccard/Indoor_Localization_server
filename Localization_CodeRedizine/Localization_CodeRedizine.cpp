@@ -31,7 +31,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		q.makeMask();
 		q.initDescriptor();
 		q.calcDescriptor();
-		MapBuilder<MyMat,DBProvider<MyMat>,MapMatching<MyMat>> mb("Images\\db_images_new.txt");
+		MapBuilder<MyMat,DBProvider<MyMat>,MapMatching<MyMat>> mb("Images\\db_images_new_2.txt");
 		mb.matchImage(q);
 	} else {
 		//Flags for what to run
@@ -44,7 +44,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			manage.performVideoTesting("Images\\3rd_floor_brown_se_stair.mp4","Images\\VideoTestResults.csv",100,true,15,28000);
 			break;
 		case SUBSAMPLE:
-			manage.performSubsample("SubSampleResults_fix.csv");
+			manage.performSubsample("SubSampleResults_fix_2.csv");
 			break;
 		case VIEWSTATS:
 			break;
@@ -54,7 +54,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			break;
 		case EXAMIN:
-			manage.evaluateMatches("Images\\new_2nd_floor_brown\\2nd_floor_brown_old_6689.JPG");
+			manage.evaluateMatches("Images\\new_2nd_floor_brown\\2nd_floor_brown_old_6767.JPG");
 			break;
 		default:
 			cerr << "Incorrect options" << endl;

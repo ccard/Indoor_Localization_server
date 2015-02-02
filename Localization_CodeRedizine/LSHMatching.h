@@ -555,7 +555,7 @@ private:
 				int mean = sumInliers(matches2[i->first],i->second.second,tmp);
 
 				if(best_fit < mean){
-					showMatches(db[i->first],query,tmp,i->second.first,true);
+					showMatches(db[i->first],query,tmp,i->second.first,false);
 					best_fit = mean;
 					img = i->first;
 				}
