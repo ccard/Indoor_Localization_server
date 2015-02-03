@@ -35,7 +35,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		mb.matchImage(q);
 	} else {
 		//Flags for what to run
-		int option = SUBSAMPLE;
+		int option = EXAMIN;
 
 		LocalizationManager<MyMat,DBProvider<MyMat>,LSHMatching<MyMat>> manage("Images\\db_images_new.txt");
 		DBProvider<MyMat> db;
