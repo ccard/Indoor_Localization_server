@@ -192,11 +192,11 @@ FilteredRes LSHMatching<ImType>::filterMatchingImages(KNNRes &matches){
 					}
 				}
 				if (imgIndex.find(match.imgIdx) != imgIndex.end()){
-					imgIndex[j->second[0].imgIdx].push_back(match);
+					imgIndex[match.imgIdx].push_back(match);
 				}
 				else {
 					imgIndex.insert(pair<int, vector<MyDMatch>>(match.imgIdx, vector<MyDMatch>()));
-					imgIndex[j->second[0].imgIdx].push_back(match);
+					imgIndex[match.imgIdx].push_back(match);
 				}
 			}
 		}
@@ -252,14 +252,16 @@ ImgMatches LSHMatching<ImType>::geometricFiltering(ImgMatches &im, int k){
 		trackerDefault.insert(make_pair(i_k, 100000.0));
 	}
 
+	map<int, double> distTrakerq, distTrakerdb;
 	map<int, MyDMatch> kClosestq, kClosestdb;
 
 	for (ImgMatches::iterator i = im.begin(); i != im.end(); ++i){
 		for (vector<MyDMatch>::iterator ref = i->second.begin(); ref != i->second.end(); ++ref){
 			kClosestdb.clear();
 			kClosestq.clear();
-
-			map<int, double> distTrakerq(trackerDefault), distTrakerdb(trackerDefault);
+			distTrakerq = trackerDefault;
+			distTrakerdb = trackerDefault;
+			
 
 			double distQ, distDB;
 
