@@ -50,7 +50,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			manage.performVideoTesting("Images\\3rd_floor_brown_se_stair.mp4","Images\\VideoTestResults.csv",100,true,15,28000);
 			break;
 		case SUBSAMPLE:
-			manage.performSubsample("full_db_fix_13.csv");
+			manage.performSubsample("full_db_fix_22.csv");
 			break;
 		case VIEWSTATS:
 			break;
