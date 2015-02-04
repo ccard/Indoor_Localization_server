@@ -3,13 +3,19 @@
 
 #include "stdafx.h"
 #include "LocalizationManager.h"
+#include "LocalizationManager.cpp"
 #include "DBImage.h"
 #include "MyMat.h"
 #include "DBProvider.h"
+#include "DBProvider.cpp"
 #include "MatProvider.h"
+#include "MatProvider.cpp"
 #include "MapBuilder.h"
+#include "MapBuilder.cpp"
 #include "MapMatching.h"
+#include "MapMatching.cpp"
 #include "LSHMatching.h"
+#include "LSHMatching.cpp"
 
 #if DEBUG
 const static int VIDEO = 0;
@@ -35,7 +41,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		mb.matchImage(q);
 	} else {
 		//Flags for what to run
-		int option = EXAMIN;
+		int option = SUBSAMPLE;
 
 		LocalizationManager<MyMat,DBProvider<MyMat>,LSHMatching<MyMat>> manage("Images\\db_images_new.txt");
 		DBProvider<MyMat> db;
@@ -44,7 +50,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			manage.performVideoTesting("Images\\3rd_floor_brown_se_stair.mp4","Images\\VideoTestResults.csv",100,true,15,28000);
 			break;
 		case SUBSAMPLE:
-			manage.performSubsample("SubSampleResults_fix_2.csv");
+			manage.performSubsample("full_db_fix_13.csv");
 			break;
 		case VIEWSTATS:
 			break;
