@@ -234,8 +234,9 @@ void LocalizationManager<ImgType, ImgProviderType, ImgMatcherType>::evaluateMatc
 	q.makeMask();
 	q.initDescriptor();
 	q.calcDescriptor();
-
+	clock_t start = clock();
 	int image = match.find(q, db);
+	cout << "time: " << ((float)(clock() - start)) / CLOCKS_PER_SEC << endl;
 	namedWindow("Query", CV_WINDOW_KEEPRATIO);
 	namedWindow("Retrieved", CV_WINDOW_KEEPRATIO);
 	if (image > ImgMatcherType::ERROR){

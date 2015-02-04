@@ -14,7 +14,11 @@ typedef map<int,vector<MyDMatch>> ImgMatches; //General image matching structure
 typedef map<int,ImgMatches> KNNRes; //The structure returned from KNN method call
 typedef pair<vector<Point2f>,vector<Point2f>> ObjectScene; //Defines the object secene relation first part of pair is the object(db), second part is the scene(query)
 typedef pair<bool,ImgMatches> FilteredRes; //This is what is returned from the filtering stage
+#if INSPECT
 typedef pair<Mat,vector<unsigned int>> Fundimental; //Defines pair from fundimentl matrix to the inliers array
+#else
+typedef pair<Mat, int> Fundimental;
+#endif
 typedef map<int,Fundimental> FundRes; //What is returned form finding fundimental matricies from multiple images
 #endif
 
@@ -163,7 +167,7 @@ private:
 	 * @param: map whos keys go from 0-(k-1) where the 0 index has the dmatch object 
 	 *         corresponding to the smallest value in indexMinMap
 	 */
-	void insertClosestNeighbor(int index, int k, double value, MyDMatch &m, map<int, double> &indexMinMap,
+	void insertClosestNeighbor(int k, double value, MyDMatch &m, map<int, double> &indexMinMap,
 		map<int, MyDMatch> &nearestNeighborMap);
 
 	/**

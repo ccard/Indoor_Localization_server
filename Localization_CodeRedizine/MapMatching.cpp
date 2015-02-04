@@ -194,31 +194,26 @@ FilteredRes MapMatching<ImType>::filterMatchingImages(KNNRes &matches){
 			i != imgMatches.end(); ++i){
 			for (map<int, vector<MyDMatch>>::iterator j = i->second.begin();
 				j != i->second.end(); ++j){
+				MyDMatch match = j->second[0];
 				if (j->second.size() >= 2){
 					MyDMatch first = j->second[0];
 					MyDMatch second = j->second[1];
 					double dist = first.distance / second.distance;
 					//if the distances ratio pass the test then add the match
 					if (dist <= mParams.pointdiff_maxDist){
-						if (imgIndex.find(first.imgIdx) != imgIndex.end()){
-							imgIndex[first.imgIdx].push_back(first);
-						}
-						else {
-							imgIndex.insert(pair<int, vector<MyDMatch>>(first.imgIdx, vector<MyDMatch>()));
-							imgIndex[first.imgIdx].push_back(first);
-						}
-					}
-				}
-				else {
-					if (imgIndex.find(j->second[0].imgIdx) != imgIndex.end()){
-						imgIndex[j->second[0].imgIdx].push_back(j->second[0]);
+						match = first;
 					}
 					else {
-						imgIndex.insert(pair<int, vector<MyDMatch>>(j->second[0].imgIdx, vector<MyDMatch>()));
-						imgIndex[j->second[0].imgIdx].push_back(j->second[0]);
+						continue;
 					}
 				}
-
+				if (imgIndex.find(match.imgIdx) != imgIndex.end()){
+					imgIndex[j->second[0].imgIdx].push_back(match);
+				}
+				else {
+					imgIndex.insert(pair<int, vector<MyDMatch>>(match.imgIdx, vector<MyDMatch>()));
+					imgIndex[j->second[0].imgIdx].push_back(match);
+				}
 			}
 		}
 
@@ -273,38 +268,48 @@ ImgMatches MapMatching<ImType>::geometricFiltering(ImgMatches &im, int k){
 		trackerDefault.insert(make_pair(i_k, 100000.0));
 	}
 
+	map<int, MyDMatch> kClosestq, kClosestdb;
+
 	for (ImgMatches::iterator i = im.begin(); i != im.end(); ++i){
 		for (vector<MyDMatch>::iterator ref = i->second.begin(); ref != i->second.end(); ++ref){
-			map<int, MyDMatch> kClosestq, kClosestdb;
+			kClosestdb.clear();
+			kClosestq.clear();
 
 			map<int, double> distTrakerq(trackerDefault), distTrakerdb(trackerDefault);
+
+			double distQ, distDB;
 
 			//Finds the k closest points to the reference query and database keypoint
 			for (vector<MyDMatch>::iterator comp = i->second.begin(); comp != i->second.end(); ++comp){
 				if (*comp == *ref) continue;
-				double distQ = getDist(ref->query_kp, comp->query_kp);
-				double distDB = getDist(ref->train_kp, comp->train_kp);
+				distQ = getDist(ref->query_kp, comp->query_kp);
+				distDB = getDist(ref->train_kp, comp->train_kp);
 
-				int indexQ = findMinValueIndex(distTrakerq, distQ, k);
-				int indexDB = findMinValueIndex(distTrakerdb, distDB, k);
+				/*int indexQ = findMinValueIndex(distTrakerq, distQ, k);
+				int indexDB = findMinValueIndex(distTrakerdb, distDB, k);*/
 
-				if (indexQ != -1) insertClosestNeighbor(indexQ, k, distQ, *comp, distTrakerq, kClosestq);
-				if (indexDB != -1) insertClosestNeighbor(indexDB, k, distDB, *comp, distTrakerdb, kClosestdb);
+				insertClosestNeighbor(k, distQ, *comp, distTrakerq, kClosestq);
+				insertClosestNeighbor(k, distDB, *comp, distTrakerdb, kClosestdb);
 			}
 
 			vector<MyDMatch> dbMatch, qMatch;
 
-			for (int i_k = 0; i_k < k; ++i_k){
-				dbMatch.push_back(kClosestdb[i_k]);
-				qMatch.push_back(kClosestq[i_k]);
+			int valid_match_count = 0;
+			for (int i_kq = 0; i_kq < k; ++i_kq){
+				for (int i_kdb = 0; i_kdb < k; ++i_kdb){
+					if (kClosestq[i_kq] == kClosestdb[i_kdb]){
+						++valid_match_count;
+						break;
+					}
+				}
 			}
 
-			int valid_match_count = 0;
+
 
 			//Counts the number of MyDMatch objects that are in both dbMatch and qMatch
-			for (vector<MyDMatch>::iterator closeQ = qMatch.begin(); closeQ != qMatch.end(); ++closeQ){
-				if (std::find(dbMatch.begin(), dbMatch.end(), *closeQ) != dbMatch.end()) ++valid_match_count;
-			}
+			/*for (vector<MyDMatch>::iterator closeQ = qMatch.begin(); closeQ != qMatch.end(); ++closeQ){
+			if (std::find(dbMatch.begin(), dbMatch.end(), *closeQ) != dbMatch.end()) ++valid_match_count;
+			}*/
 
 			//If number of matched points that are nearest neighbors to the matched reference query 
 			//and database keypoint is >= a threshold then keep the match otherwise ignore it 
@@ -313,9 +318,8 @@ ImgMatches MapMatching<ImType>::geometricFiltering(ImgMatches &im, int k){
 					newMatches[ref->imgIdx].push_back(*ref);
 				}
 				else {
-					vector<MyDMatch> tmpMatch;
-					tmpMatch.push_back(*ref);
-					newMatches.insert(make_pair(ref->imgIdx, tmpMatch));
+					newMatches.insert(make_pair(ref->imgIdx, vector<MyDMatch>()));
+					newMatches[ref->imgIdx].push_back(*ref);
 				}
 			}
 		}
@@ -334,24 +338,34 @@ int MapMatching<ImType>::findMinValueIndex(map<int, double> &indexMinMap, double
 }
 
 template <typename ImType>
-void MapMatching<ImType>::insertClosestNeighbor(int index, int k, double value, MyDMatch &m, map<int, double> &indexMinMap,
+void MapMatching<ImType>::insertClosestNeighbor(int k, double value, MyDMatch &m, map<int, double> &indexMinMap,
 	map<int, MyDMatch> &nearestNeighborMap){
 	MyDMatch tmpM;
 	double tmpV;
-	for (int i = index; i < k; ++i){
-		if (i == index){
-			tmpM = nearestNeighborMap[i];
-			tmpV = indexMinMap[i];
-			nearestNeighborMap[i] = m;
-			indexMinMap[i] = value;
+	int index = 0;
+	bool found = false;
+	for (int i = 0; i < k; ++i){
+		if (!found){
+			if (value < indexMinMap[i]){
+				found = true;
+				index = i;
+			}
 		}
-		else {
-			MyDMatch tmp_m = nearestNeighborMap[i];
-			nearestNeighborMap[i] = tmpM;
-			tmpM = tmp_m;
-			double tmp_v = indexMinMap[i];
-			indexMinMap[i] = tmpV;
-			tmpV = tmp_v;
+		if (found){
+			if (i == index){
+				tmpM = nearestNeighborMap[i];
+				tmpV = indexMinMap[i];
+				nearestNeighborMap[i] = m;
+				indexMinMap[i] = value;
+			}
+			else {
+				MyDMatch tmp_m = nearestNeighborMap[i];
+				nearestNeighborMap[i] = tmpM;
+				tmpM = tmp_m;
+				double tmp_v = indexMinMap[i];
+				indexMinMap[i] = tmpV;
+				tmpV = tmp_v;
+			}
 		}
 	}
 }
@@ -367,7 +381,7 @@ int MapMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 
 	if (matches.size() == 0) return -1;
 
-	FundRes fundamentals = buildFundimentalMat(matches);
+	FundRess fundamentals = buildFundimentalMat(matches);
 
 	double best_fit = 0, second_best = 0;
 	int img = ERROR;
@@ -395,7 +409,7 @@ int MapMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 	}
 #else
 	//Find inliesrs to the fundamentals
-	for (FundRes::iterator i = fundamentals.begin();
+	for (FundRess::iterator i = fundamentals.begin();
 		i != fundamentals.end(); ++i){
 
 		int mean = sumInliers(i->second.second);
@@ -429,13 +443,13 @@ int MapMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 	ImgMatches matches2 = doubleCheckMatches(better_matches, query);
 
 	//Find fundamental matricies
-	FundRes fundimentals = buildFundimentalMat(matches2);
+	FundRess fundimentals = buildFundimentalMat(matches2);
 
 	best_fit = 0;
 
 #if INSPECT
 	//Find the image with the best number of inliers
-	for (FundRes::iterator i = fundimentals.begin();
+	for (FundRess::iterator i = fundimentals.begin();
 		i != fundimentals.end(); ++i){
 		vector<MyDMatch> tmp;
 		int mean = sumInliers(matches2[i->first], i->second.second, tmp);
@@ -448,7 +462,7 @@ int MapMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 	}
 #else
 	//Find the image with the best number of inliers
-	for (FundRes::iterator i = fundimentals.begin();
+	for (FundRess::iterator i = fundimentals.begin();
 		i != fundimentals.end(); ++i){
 
 		int mean = sumInliers(i->second.second);
@@ -470,7 +484,7 @@ int MapMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 
 	Rat tempR;
 
-	FundRes fundamentals = buildFundimentalMat(matches);
+	FundRess fundamentals = buildFundimentalMat(matches);
 
 	double best_fit = 0, second_best = 0;
 	int img = ERROR;
@@ -479,7 +493,7 @@ int MapMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 
 #if INSPECT
 	//Find inliesrs to the fundamentals
-	for (FundRes::iterator i = fundamentals.begin();
+	for (FundRess::iterator i = fundamentals.begin();
 		i != fundamentals.end(); ++i){
 		vector <MyDMatch> tmp;
 		int mean = sumInliers(matches[i->first], i->second.second, tmp);
@@ -499,7 +513,7 @@ int MapMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 	}
 #else
 	//Find inliesrs to the fundamentals
-	for (FundRes::iterator i = fundamentals.begin();
+	for (FundRess::iterator i = fundamentals.begin();
 		i != fundamentals.end(); ++i){
 		vector <MyDMatch> tmp;
 		int mean = sumInliers(matches[i->first], i->second.second, tmp);
@@ -534,13 +548,13 @@ int MapMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 	ImgMatches matches2 = doubleCheckMatches(better_matches, query);
 
 	//Find fundamental matricies
-	FundRes fundimentals = buildFundimentalMat(matches2);
+	FundRess fundimentals = buildFundimentalMat(matches2);
 
 	best_fit = 0;
 
 #if INSPECT
 	//Find the image with the best number of inliers
-	for (FundRes::iterator i = fundimentals.begin();
+	for (FundRess::iterator i = fundimentals.begin();
 		i != fundimentals.end(); ++i){
 		vector<MyDMatch> tmp;
 		int mean = sumInliers(matches2[i->first], i->second.second, tmp);
@@ -554,7 +568,7 @@ int MapMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 	}
 #else
 	//Find the image with the best number of inliers
-	for (FundRes::iterator i = fundimentals.begin();
+	for (FundRess::iterator i = fundimentals.begin();
 		i != fundimentals.end(); ++i){
 		vector <MyDMatch> tmp;
 		int mean = sumInliers(matches[i->first], i->second.second, tmp);
@@ -669,20 +683,20 @@ Rat MapMatching<ImType>::findRandT(Mat F, MyDMatch &dm, Size s){
 }
 
 template <typename ImType>
-FundRes MapMatching<ImType>::buildFundimentalMat(ImgMatches matches){
-	FundRes ret;
+FundRess MapMatching<ImType>::buildFundimentalMat(ImgMatches matches){
+	FundRess ret;
 
 	//Goes through each db image and finds the fundamental matrix between each image and query image
 	for (ImgMatches::iterator i = matches.begin();
 		i != matches.end(); ++i){
-		Fundimental p = findFund(buildObjSceneCorr(i->second));
+		Fund p = findFund(buildObjSceneCorr(i->second));
 		ret.insert(make_pair(i->first, p));
 	}
 	return ret;
 }
 
 template <typename ImType>
-Fundimental MapMatching<ImType>::findFund(ObjectScene train_scene){
+Fund MapMatching<ImType>::findFund(ObjectScene train_scene){
 	vector<unsigned char> inliers(train_scene.second.size());
 
 	Mat fund = findFundamentalMat(train_scene.first, //db image points

@@ -7,17 +7,14 @@
 
 #include "Matcher.h"
 #include "MyDMatch.h"
+#include "LSHMatching.h"
 
-#ifndef _LSHTYPES
-#define _LSHTYPES
+#ifndef _MAPMATCHTYPES
+#define _MAPMATCHTYPES
 //Defines type defs and structures to return from the methods
+typedef pair<Mat, vector<unsigned int>> Fund; //Defines pair from fundimentl matrix to the inliers array
+typedef map<int, Fund> FundRess; //What is returned form finding fundimental matricies from multiple imagesv
 
-typedef map<int,vector<MyDMatch>> ImgMatches; //General image matching structure
-typedef map<int,ImgMatches> KNNRes; //The structure returned from KNN method call
-typedef pair<vector<Point2f>,vector<Point2f>> ObjectScene; //Defines the object secene relation first part of pair is the object(db), second part is the scene(query)
-typedef pair<bool,ImgMatches> FilteredRes; //This is what is returned from the filtering stage
-typedef pair<Mat,vector<unsigned int>> Fundimental; //Defines pair from fundimentl matrix to the inliers array
-typedef map<int,Fundimental> FundRes; //What is returned form finding fundimental matricies from multiple images
 typedef pair<Mat,Mat> Rat; //What is returned from find, firt is the image number second pair is R,t
 #endif
 
@@ -168,7 +165,7 @@ private:
 	 * @param: map whos keys go from 0-(k-1) where the 0 index has the dmatch object 
 	 *         corresponding to the smallest value in indexMinMap
 	 */
-	void insertClosestNeighbor(int index, int k, double value, MyDMatch &m, map<int, double> &indexMinMap,
+	void insertClosestNeighbor(int k, double value, MyDMatch &m, map<int, double> &indexMinMap,
 		map<int, MyDMatch> &nearestNeighborMap);
 
 	/**
@@ -220,7 +217,7 @@ private:
 	* @return: a map of ints to pairs, first of the pairs is the fundimental matrix the second is
 	* the inliers 1 for inlier 0 for not
 	*/
-	FundRes buildFundimentalMat(ImgMatches matches);
+	FundRess buildFundimentalMat(ImgMatches matches);
 
 	/**
 	* Finds the fundimental matrix and returns it along with the inliers
@@ -229,7 +226,7 @@ private:
 	*
 	* @return: par from thr fund matrix to the inliers
 	*/
-	Fundimental findFund(ObjectScene train_scene);
+	Fund findFund(ObjectScene train_scene);
 
 	/**
 	* This function rematches the points to ensure a better fit then what lsh might return
