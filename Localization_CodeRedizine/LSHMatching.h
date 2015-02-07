@@ -32,7 +32,7 @@ public:
 		lshMatcher = FlannBasedMatcher(new flann::LshIndexParams(1,31,2));
 		if(!mParams._init){
 			mParams.k = 15;
-			mParams.inlierThresh = 22;
+			mParams.inlierThresh = 4;
 			mParams.confidence = 0.99;
 			mParams.pointdiff_maxDist = 0.8;
 			mParams.fund_f_maxDist = 0;

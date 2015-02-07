@@ -41,26 +41,26 @@ int _tmain(int argc, _TCHAR* argv[])
 		mb.matchImage(q);
 	} else {
 		//Flags for what to run
-		int option = SUBSAMPLE;
+		int option = ROCTEST;
 
-		LocalizationManager<MyMat,DBProvider<MyMat>,LSHMatching<MyMat>> manage("Images\\db_images_new.txt");
+		LocalizationManager<MyMat,DBProvider<MyMat>,LSHMatching<MyMat>> manage("Images\\roc_db.txt");
 		DBProvider<MyMat> db;
 		switch(option){
 		case VIDEO:
 			manage.performVideoTesting("Images\\3rd_floor_brown_se_stair.mp4","Images\\VideoTestResults.csv",100,true,15,28000);
 			break;
 		case SUBSAMPLE:
-			manage.performSubsample("full_db_fix_22.csv");
+			manage.performSubsample("full_db_fix_25.csv");
 			break;
 		case VIEWSTATS:
 			break;
 		case ROCTEST:
-			if(db.open("Images\\db_images_roc_test_set.txt")){
-				manage.performTestingStats(db,"ROC_RES_in_22.csv");
+			if(db.open("Images\\roc_textset.txt")){
+				manage.performTestingStats(db,"ROC_RES_Fix_4.csv");
 			}
 			break;
 		case EXAMIN:
-			manage.evaluateMatches("Images\\new_3rd_floor_brown\\3rd_flloor_brown_new_6910.JPG");
+			manage.evaluateMatches("Images\\new_2nd_floor_brown\\2nd_floor_brown_new_7184.JPG");
 			break;
 		default:
 			cerr << "Incorrect options" << endl;

@@ -376,7 +376,7 @@ int LSHMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 
 #if INSPECT
 	//Find inliesrs to the fundamentals
-	for (FundRes::iterator i = fundamental.begin();
+	for (FundRes::iterator i = fundamentals.begin();
 		i != fundamentals.end(); ++i){
 		vector <MyDMatch> tmp;
 		int mean = sumInliers(matches[i->first], i->second.second, tmp);

@@ -5,7 +5,7 @@ template<typename ImgType, typename ImgProviderType, typename ImgMatcherType>
 bool LocalizationManager<ImgType, ImgProviderType, ImgMatcherType>::performTestingStats(ImgProviderType &pr, string file){
 
 	map<string, string> results;
-
+	cout << "Starting tests..." << endl;
 	for (int i = 0; i < pr.size(); ++i){
 		int img = match.find(pr[i], db);
 
@@ -17,6 +17,7 @@ bool LocalizationManager<ImgType, ImgProviderType, ImgMatcherType>::performTesti
 		}
 	}
 
+	cout << "Writing to file " << file << "..." << endl;
 	ofstream out(file.c_str());
 
 	for (map<string, string>::iterator i = results.begin(); i != results.end(); ++i){
@@ -24,6 +25,7 @@ bool LocalizationManager<ImgType, ImgProviderType, ImgMatcherType>::performTesti
 	}
 
 	out.close();
+	cout << "Finished..." << endl;
 	return true;
 }
 
