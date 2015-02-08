@@ -16,6 +16,9 @@ typedef pair<Mat, vector<unsigned int>> Fund; //Defines pair from fundimentl mat
 typedef map<int, Fund> FundRess; //What is returned form finding fundimental matricies from multiple imagesv
 
 typedef pair<Mat,Mat> Rat; //What is returned from find, firt is the image number second pair is R,t
+
+typedef pair<ImageContainer*, Rat> MapImages;
+typedef vector<MapImages> NearImages;
 #endif
 
 template <typename ImType>
@@ -27,7 +30,7 @@ public:
 		lastIndex = 0;
 		lshMatcher = FlannBasedMatcher(new flann::LshIndexParams(1,31,2));
 		if(!mParams._init){
-			mParams.k = 20;
+			mParams.k = 15;
 			mParams.inlierThresh = 16;
 			mParams.confidence = 0.99;
 			mParams.pointdiff_maxDist = 0.8;
@@ -53,7 +56,7 @@ public:
 
 	int find(ImageContainer& query, ImageProvider<ImType> &db);
 
-	int find(ImageContainer& query, ImageProvider<ImType> &db, Rat &r);
+	int find(ImageContainer& query, ImageProvider<ImType> &db, NearImages &r);
 
 	void train(){
 		lshMatcher.train();	
@@ -196,7 +199,7 @@ private:
 	*/
 	int verify(ImgMatches &matches, ImageProvider<ImType> &db, ImageContainer &query);
 
-	int verify(ImgMatches &matches, ImageProvider<ImType> &db, ImageContainer &query, Rat &r);
+	int verify(ImgMatches &matches, ImageProvider<ImType> &db, ImageContainer &query, NearImages &r);
 
 	/**
 	 * Find the (R)otation and (t)ranslation matricies from F

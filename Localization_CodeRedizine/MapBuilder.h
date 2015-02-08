@@ -47,7 +47,7 @@ public:
 
 	void buildMap();
 
-	ImgMatch matchImage(ImgType q);
+	NearImages matchImage(ImgType q);
 
 private:
 	ImgProviderType db;

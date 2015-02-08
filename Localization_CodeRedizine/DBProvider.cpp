@@ -47,6 +47,7 @@ bool DBProvider<ImType>::saveImages(){
 }
 template<typename ImType>
 vector<ImType> DBProvider<ImType>::readDB(){
+	size_t image_index = 0;
 	vector<ImType> ret;
 	string line = "";
 #if DEBUG
@@ -70,6 +71,8 @@ vector<ImType> DBProvider<ImType>::readDB(){
 		size += kps.size();
 #endif
 		ret.push_back(ImType(img_file, des, kps));
+		ret[ret.size()-1].setIndex(image_index);
+		++image_index;
 	}
 	in.close();
 #if DEBUG

@@ -18,7 +18,7 @@ int MapMatching<ImType>::find(ImageContainer& query, ImageProvider<ImType> &db){
 }
 
 template <typename ImType>
-int MapMatching<ImType>::find(ImageContainer& query, ImageProvider<ImType> &db, Rat &r){
+int MapMatching<ImType>::find(ImageContainer& query, ImageProvider<ImType> &db, NearImages &r){
 	KNNRes matches;
 	if (knnMatch(query, db, matches)) {
 		FilteredRes filteredImgs = filterMatchingImages(matches);
@@ -268,14 +268,16 @@ ImgMatches MapMatching<ImType>::geometricFiltering(ImgMatches &im, int k){
 		trackerDefault.insert(make_pair(i_k, 100000.0));
 	}
 
+	map<int, double> distTrakerq, distTrakerdb;
 	map<int, MyDMatch> kClosestq, kClosestdb;
 
 	for (ImgMatches::iterator i = im.begin(); i != im.end(); ++i){
 		for (vector<MyDMatch>::iterator ref = i->second.begin(); ref != i->second.end(); ++ref){
 			kClosestdb.clear();
 			kClosestq.clear();
+			distTrakerq = trackerDefault;
+			distTrakerdb = trackerDefault;
 
-			map<int, double> distTrakerq(trackerDefault), distTrakerdb(trackerDefault);
 
 			double distQ, distDB;
 
@@ -478,15 +480,19 @@ int MapMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 }
 
 template <typename ImType>
-int MapMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, ImageContainer &query, Rat &r){
+int MapMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, ImageContainer &query, NearImages &r){
 
 	if (matches.size() == 0) return -1;
 
-	Rat tempR;
+	NearImages tempR;
+
+	Rat tempr;
+
+	map<int, Rat> temp_R;
 
 	FundRess fundamentals = buildFundimentalMat(matches);
 
-	double best_fit = 0, second_best = 0;
+	double best_fit = 0, second_best = 0,third_best;
 	int img = ERROR;
 
 	map<int, double> image_inliers;
@@ -519,69 +525,84 @@ int MapMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 		int mean = sumInliers(matches[i->first], i->second.second, tmp);
 
 		if (best_fit < mean){
-			tempR = findRandT(i->second.first, tmp[0], db[i->first].imageSize());
+			temp_R.insert(make_pair(i->first, findRandT(i->second.first, tmp[0], db[i->first].imageSize())));
+			third_best = second_best;
 			second_best = best_fit;
 			best_fit = mean;
 			img = i->first;
 		}
 		else if (second_best < mean) {
+			temp_R.insert(make_pair(i->first,findRandT(i->second.first, tmp[0], db[i->first].imageSize())));
+			third_best = second_best;
 			second_best = mean;
+		} else if (third_best < mean) {
+			temp_R.insert(make_pair(i->first, findRandT(i->second.first, tmp[0], db[i->first].imageSize())));
+			third_best = mean;
 		}
 		image_inliers.insert(make_pair(i->first, mean));
 	}
 #endif
-	r = (best_fit >= mParams.inlierThresh ? tempR : r);
-	if (best_fit >= mParams.inlierThresh){
-		return img;
-	}
-
-	img = ERROR;
+	
 	//Remove all images with less than the second best number of inliers
-	map<int, ImType> better_matches;
 	for (map<int, double>::iterator i = image_inliers.begin(); i != image_inliers.end(); ++i){
-		if (i->second >= second_best){
-			better_matches.insert(make_pair(i->first, db[i->first]));
+		if (i->second >= third_best && tempR.size() < 3){
+			tempR.push_back(make_pair(&db[i->first], temp_R[i->first]));
 		}
 	}
 
-	//Rematch the images
-	ImgMatches matches2 = doubleCheckMatches(better_matches, query);
-
-	//Find fundamental matricies
-	FundRess fundimentals = buildFundimentalMat(matches2);
-
-	best_fit = 0;
-
-#if INSPECT
-	//Find the image with the best number of inliers
-	for (FundRess::iterator i = fundimentals.begin();
-		i != fundimentals.end(); ++i){
-		vector<MyDMatch> tmp;
-		int mean = sumInliers(matches2[i->first], i->second.second, tmp);
-
-		if (best_fit < mean){
-			tempR = findRandT(i->second.first, tmp[0], db[i->first].imageSize());
-			showMatches(db[i->first], query, tmp, i->second.first, true);
-			best_fit = mean;
-			img = i->first;
-		}
-	}
-#else
-	//Find the image with the best number of inliers
-	for (FundRess::iterator i = fundimentals.begin();
-		i != fundimentals.end(); ++i){
-		vector <MyDMatch> tmp;
-		int mean = sumInliers(matches[i->first], i->second.second, tmp);
-
-		if (best_fit < mean){
-			tempR = findRandT(i->second.first, tmp[0], db[i->first].imageSize());
-			best_fit = mean;
-			img = i->first;
-		}
-	}
-#endif
-	r = (best_fit >= mParams.inlierThresh ? tempR : r);
-	return (best_fit >= mParams.inlierThresh ? img : ERROR);
+	r = tempR;
+	return img;
+//	if (best_fit >= mParams.inlierThresh){
+//		return img;
+//	}
+//
+//	img = ERROR;
+//	//Remove all images with less than the second best number of inliers
+//	map<int, ImType> better_matches;
+//	for (map<int, double>::iterator i = image_inliers.begin(); i != image_inliers.end(); ++i){
+//		if (i->second >= second_best){
+//			better_matches.insert(make_pair(i->first, db[i->first]));
+//		}
+//	}
+//
+//	//Rematch the images
+//	ImgMatches matches2 = doubleCheckMatches(better_matches, query);
+//
+//	//Find fundamental matricies
+//	FundRess fundimentals = buildFundimentalMat(matches2);
+//
+//	best_fit = 0;
+//
+//#if INSPECT
+//	//Find the image with the best number of inliers
+//	for (FundRess::iterator i = fundimentals.begin();
+//		i != fundimentals.end(); ++i){
+//		vector<MyDMatch> tmp;
+//		int mean = sumInliers(matches2[i->first], i->second.second, tmp);
+//
+//		if (best_fit < mean){
+//			tempR = findRandT(i->second.first, tmp[0], db[i->first].imageSize());
+//			showMatches(db[i->first], query, tmp, i->second.first, true);
+//			best_fit = mean;
+//			img = i->first;
+//		}
+//	}
+//#else
+//	//Find the image with the best number of inliers
+//	for (FundRess::iterator i = fundimentals.begin();
+//		i != fundimentals.end(); ++i){
+//		vector <MyDMatch> tmp;
+//		int mean = sumInliers(matches[i->first], i->second.second, tmp);
+//
+//		if (best_fit < mean){
+//			tempr = findRandT(i->second.first, tmp[0], db[i->first].imageSize());
+//			best_fit = mean;
+//			img = i->first;
+//		}
+//	}
+//#endif
+	//r = (best_fit >= mParams.inlierThresh ? tempr : r);
+	//return (best_fit >= mParams.inlierThresh ? img : ERROR);
 }
 
 template <typename ImType>
