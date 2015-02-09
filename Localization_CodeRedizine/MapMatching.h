@@ -17,7 +17,7 @@ typedef map<int, Fund> FundRess; //What is returned form finding fundimental mat
 
 typedef pair<Mat,Mat> Rat; //What is returned from find, firt is the image number second pair is R,t
 
-typedef pair<ImageContainer*, Rat> MapImages;
+typedef pair<size_t, Rat> MapImages;
 typedef vector<MapImages> NearImages;
 #endif
 

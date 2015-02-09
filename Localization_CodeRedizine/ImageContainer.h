@@ -104,6 +104,7 @@ public:
 		this->name = o.name;
 		o.descriptor.copyTo(this->descriptor);
 		keyPoints = vector<KeyPoint>(o.keyPoints);
+		this->img_index = o.img_index;
 	}
 
 	~ImageContainer(){

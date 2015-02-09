@@ -28,17 +28,10 @@ const static int EXAMIN = 4;
 int _tmain(int argc, _TCHAR* argv[])
 {
 #if DEBUG
-	bool map_or_match = false;
+	bool map_or_match = true;
 	if(map_or_match){
-		Mat tmp = imread("Images\\new_2nd_floor_brown\\2nd_floor_brown_new_7265.JPG");
-		MyMat q;
-		tmp.copyTo(q);
-		resize(q,q,Size(612,816));
-		q.makeMask();
-		q.initDescriptor();
-		q.calcDescriptor();
-		MapBuilder<MyMat,DBProvider<MyMat>,MapMatching<MyMat>> mb("Images\\db_images_new_2.txt");
-		mb.matchImage(q);
+		MapBuilder<MyMat,DBProvider<MyMat>,MapMatching<MyMat>> mb("Images\\db_images_new_3rd.txt");
+		mb.buildMap("Test_map");
 	} else {
 		//Flags for what to run
 		int option = ROCTEST;

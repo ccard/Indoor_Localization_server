@@ -45,9 +45,9 @@ public:
 		}
 	}
 
-	void buildMap();
+	void buildMap(string output_prefix);
 
-	NearImages matchImage(ImgType q);
+	NearImages matchImage(ImgType q, ImgProviderType &ndb);
 
 private:
 	ImgProviderType db;
@@ -67,5 +67,11 @@ private:
 		db.open(file);
 		return db.isOpen();
 	}
+
+	void newDB(ImgType &q, ImgProviderType &ndb);
+
+	void buildTransform(map<size_t,map<size_t,Rat>> &transformMatrix, map<size_t,vector<size_t>> &adjacency, ImgType &q, NearImages &ni);
+
+	void writeToFile(string output_prefix,map<size_t,map<size_t,Rat>> &transformMatrix, map<size_t,vector<size_t>> &adjacency);
 };
 
