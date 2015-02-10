@@ -31,7 +31,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	bool map_or_match = true;
 	if(map_or_match){
 		MapBuilder<MyMat,DBProvider<MyMat>,MapMatching<MyMat>> mb("Images\\db_images_new_3rd.txt");
-		mb.buildMap("Test_map");
+		mb.buildMap("Test_map_2");
 	} else {
 		//Flags for what to run
 		int option = ROCTEST;
