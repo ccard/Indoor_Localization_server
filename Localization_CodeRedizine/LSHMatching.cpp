@@ -555,6 +555,8 @@ int LSHMatching<ImType>::sumInliers(vector<MyDMatch> &matches, vector<unsigned i
 template <typename ImType>
 void LSHMatching<ImType>::showMatches(ImType &db, ImageContainer &query, vector<MyDMatch> &inliers, Mat F, bool step = false){
 	ObjectScene objscene = buildObjSceneCorr(inliers);
+	namedWindow("DBInliers",CV_WINDOW_KEEPRATIO);
+	namedWindow("QueryInliers",CV_WINDOW_KEEPRATIO);
 	if (!step){
 		if (db.loadImage()){
 			Mat r;
@@ -577,6 +579,7 @@ void LSHMatching<ImType>::showMatches(ImType &db, ImageContainer &query, vector<
 				Point p1(0, y1), p2(db.imageSize().width, y2);
 				line(r, p1, p2, Scalar::all(-1));
 			}
+			
 			imshow("DBInliers", r);
 		}
 		else {
@@ -655,6 +658,8 @@ template <typename ImType>
 void LSHMatching<ImType>::inspectEpipole(ImType &db, ImageContainer &query, vector<MyDMatch> &inliers, Mat F){
 	ObjectScene objscene = buildObjSceneCorr(inliers);
 	SVD svd(F, SVD::FULL_UV);
+	namedWindow("DBInliers",CV_WINDOW_KEEPRATIO);
+	namedWindow("QueryInliers",CV_WINDOW_KEEPRATIO);
 	if (db.loadImage()){
 		Mat r;
 		db.getMat(r);

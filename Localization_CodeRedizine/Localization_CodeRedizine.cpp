@@ -28,15 +28,15 @@ const static int EXAMIN = 4;
 int _tmain(int argc, _TCHAR* argv[])
 {
 #if DEBUG
-	bool map_or_match = true;
+	bool map_or_match = false;
 	if(map_or_match){
 		MapBuilder<MyMat,DBProvider<MyMat>,MapMatching<MyMat>> mb("Images\\db_images_new_3rd.txt");
 		mb.buildMap("Test_map_2");
 	} else {
 		//Flags for what to run
-		int option = ROCTEST;
+		int option = EXAMIN;
 
-		LocalizationManager<MyMat,DBProvider<MyMat>,LSHMatching<MyMat>> manage("Images\\roc_db.txt");
+		LocalizationManager<MyMat,DBProvider<MyMat>,LSHMatching<MyMat>> manage("Images\\db_images_new_2.txt");
 		DBProvider<MyMat> db;
 		switch(option){
 		case VIDEO:
@@ -53,7 +53,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			break;
 		case EXAMIN:
-			manage.evaluateMatches("Images\\new_2nd_floor_brown\\2nd_floor_brown_new_7184.JPG");
+			manage.evaluateMatches("Images\\new_2nd_floor_brown\\2nd_floor_brown_new_7375.JPG");
 			break;
 		default:
 			cerr << "Incorrect options" << endl;
