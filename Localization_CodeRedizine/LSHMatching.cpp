@@ -410,6 +410,11 @@ int LSHMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 	}
 #endif
 
+#if INSPECT
+	if(img >= 0){
+		showEpilines(db[img],query,fundamentals[img].first);
+	}
+#endif
 	if (best_fit >= mParams.inlierThresh){
 		return img;
 	}
@@ -443,6 +448,9 @@ int LSHMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 			best_fit = mean;
 			img = i->first;
 		}
+	}
+	if(img >= 0){
+		showEpilines(db[img],query,fundimentals[img].first);
 	}
 #else
 	//Find the image with the best number of inliers
@@ -553,7 +561,7 @@ int LSHMatching<ImType>::sumInliers(vector<MyDMatch> &matches, vector<unsigned i
 	return b;
 }
 template <typename ImType>
-void LSHMatching<ImType>::showMatches(ImType &db, ImageContainer &query, vector<MyDMatch> &inliers, Mat F, bool step = false){
+void LSHMatching<ImType>::showMatches(ImType &db, ImageContainer &query, vector<MyDMatch> &inliers, Mat F, bool step){
 	ObjectScene objscene = buildObjSceneCorr(inliers);
 	namedWindow("DBInliers",CV_WINDOW_KEEPRATIO);
 	namedWindow("QueryInliers",CV_WINDOW_KEEPRATIO);
@@ -718,5 +726,62 @@ void LSHMatching<ImType>::inspectEpipole(ImType &db, ImageContainer &query, vect
 
 	cout << svd.u.col(2) / svd.u.at<double>(2, 2) << endl;
 
+}
+template <typename ImType>
+void LSHMatching<ImType>::showEpilines(ImType &db, ImageContainer &query, Mat F){
+	if(query.hasImage() && db.loadImage()){
+		namedWindow("DBInliers",CV_WINDOW_KEEPRATIO);
+		namedWindow("QueryInliers",CV_WINDOW_KEEPRATIO);
+		Mat q, d,d2;
+		db.getMat(d2);
+		vector<Point2f> q_points;
+		for(size_t i = 0; i < query.getKeyPoints().size(); ++i){
+			q_points.push_back(query.getKeyPoint(i).pt);
+		}
+		for(size_t i = 0; i < db.getKeyPoints().size(); ++i){
+			KeyPoint d_p = db.getKeyPoint(i);
+			circle(d2, d_p.pt, 2, Scalar(255, 0, 0), -1);
+			/*char d_buff[33];
+			itoa(i, d_buff, 10);
+			putText(d2, d_buff, Point(d_p.pt.x + 4, d_p.pt.y + 4), FONT_HERSHEY_COMPLEX, .5,
+				Scalar(255, 150, 255));*/
+		}
+
+		vector<Vec3f> eplinesdb, eplinesq;
+		//computeCorrespondEpilines(objscene.first, 1, F, eplinesq);
+		computeCorrespondEpilines(q_points, 2, F, eplinesdb);
+		for (size_t t = 0; t < eplinesdb.size(); ++t){
+			d2.copyTo(d);
+			query.getMat(q);
+
+			KeyPoint q_p = query.getKeyPoint(t);
+			circle(q, q_p.pt, 2, Scalar(0, 0, 255), -1);
+			char q_buff[33];
+			itoa(t, q_buff, 10);
+			putText(q, q_buff, Point(q_p.pt.x + 4, q_p.pt.y + 4), FONT_HERSHEY_COMPLEX, .5,
+				Scalar(255, 13, 255));
+
+			/*KeyPoint d_p = inliers[t].train_kp;
+			circle(d, d_p.pt, 2, Scalar(0, 0, 255), -1);
+			char d_buff[33];
+			itoa(t, d_buff, 10);
+			putText(d, d_buff, Point(d_p.pt.x + 4, d_p.pt.y + 4), FONT_HERSHEY_COMPLEX, .5,
+			Scalar(255, 13, 255));*/
+
+			/*float q_y1 = (-1 * (eplinesq[t][2] / eplinesq[t][1]));
+			float q_y2 = (-1 * (eplinesq[t][0] / eplinesq[t][1])*query.imageSize().width) - (eplinesq[t][2] / eplinesq[t][1]);
+			Point q_p1(0, q_y1), q_p2(query.imageSize().width, q_y2);
+			line(q, q_p1, q_p2, Scalar(0, 100, 255));*/
+
+			float db_y1 = (-1 * (eplinesdb[t][2] / eplinesdb[t][1]));
+			float db_y2 = (-1 * (eplinesdb[t][0] / eplinesdb[t][1])*db.imageSize().width) - (eplinesdb[t][2] / eplinesdb[t][1]);
+			Point db_p1(0, db_y1), db_p2(db.imageSize().width, db_y2);
+			line(d, db_p1, db_p2, Scalar(0, 100, 255));
+
+			imshow("QueryInliers", q);
+			imshow("DBInliers", d);
+			waitKey();
+		}
+	}
 }
 #endif

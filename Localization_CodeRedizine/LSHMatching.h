@@ -32,7 +32,7 @@ public:
 		lshMatcher = FlannBasedMatcher(new flann::LshIndexParams(1,31,2));
 		if(!mParams._init){
 			mParams.k = 15;
-			mParams.inlierThresh = 4;
+			mParams.inlierThresh = 16;
 			mParams.confidence = 0.99;
 			mParams.pointdiff_maxDist = 0.8;
 			mParams.fund_f_maxDist = 0;
@@ -239,5 +239,6 @@ ImgMatches doubleCheckMatches(map<int, ImType> &db, ImageContainer &query, doubl
 	int sumInliers(vector<MyDMatch> &matches, vector<unsigned int> &inliers, vector<MyDMatch> &fittingMatches);
 	void showMatches(ImType &db, ImageContainer &query, vector<MyDMatch> &inliers, Mat F,bool step = false);
 	void inspectEpipole(ImType &db, ImageContainer &query, vector<MyDMatch> &inliers, Mat F);
+	void showEpilines(ImType &db, ImageContainer &query, Mat F);
 #endif
 };
