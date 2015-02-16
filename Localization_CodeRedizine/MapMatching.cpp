@@ -507,7 +507,7 @@ int MapMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 		if (best_fit < mean){
 			showMatches(db[i->first], query, tmp, i->second.first);
 			inspectEpipole(db[i->first], query, tmp, i->second.first);
-			tempR = findRandT(i->second.first, tmp[0], db[i->first].imageSize());
+			tempr = findRandT(i->second.first, tmp[0], db[i->first].imageSize());
 			second_best = best_fit;
 			best_fit = mean;
 			img = i->first;
