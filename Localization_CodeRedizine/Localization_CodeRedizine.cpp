@@ -34,16 +34,16 @@ int _tmain(int argc, _TCHAR* argv[])
 		mb.buildMap("Test_map_2");
 	} else {
 		//Flags for what to run
-		int option = EXAMIN;
+		int option = SUBSAMPLE;
 
-		LocalizationManager<MyMat,DBProvider<MyMat>,LSHMatching<MyMat>> manage("Images\\db_images_new_2.txt");
+		LocalizationManager<MyMat,DBProvider<MyMat>,LSHMatching<MyMat>> manage("Images\\db_images_new.txt");
 		DBProvider<MyMat> db;
 		switch(option){
 		case VIDEO:
 			manage.performVideoTesting("Images\\3rd_floor_brown_se_stair.mp4","Images\\VideoTestResults.csv",100,true,15,28000);
 			break;
 		case SUBSAMPLE:
-			manage.performSubsample("full_db_fix_25.csv");
+			manage.performSubsample("full_db_fix_test_1.csv");
 			break;
 		case VIEWSTATS:
 			break;
@@ -53,7 +53,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			break;
 		case EXAMIN:
-			manage.evaluateMatches("Images\\new_2nd_floor_brown\\2nd_floor_brown_new_7375.JPG");
+			manage.evaluateMatches("Images\\new_2nd_floor_brown\\2nd_floor_brown_old_6706.JPG");
 			break;
 		default:
 			cerr << "Incorrect options" << endl;
