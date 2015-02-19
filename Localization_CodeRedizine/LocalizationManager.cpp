@@ -6,8 +6,11 @@ bool LocalizationManager<ImgType, ImgProviderType, ImgMatcherType>::performTesti
 
 	map<string, string> results;
 	cout << "Starting tests..." << endl;
+	clock_t start, average = 0;
 	for (int i = 0; i < pr.size(); ++i){
+		start = clock();
 		int img = match.find(pr[i], db);
+		average = average + (clock()-start);
 
 		if (ImgMatcherType::ERROR >= img){
 			results.insert(make_pair(pr[i].getName(), "no match"));
@@ -16,6 +19,9 @@ bool LocalizationManager<ImgType, ImgProviderType, ImgMatcherType>::performTesti
 			results.insert(make_pair(pr[i].getName(), db[img].getName()));
 		}
 	}
+
+	double avg = ((double)average)/pr.size();
+	cout << "Average query time: " << avg/CLOCKS_PER_SEC << " seconds" << endl;
 
 	cout << "Writing to file " << file << "..." << endl;
 	ofstream out(file.c_str());

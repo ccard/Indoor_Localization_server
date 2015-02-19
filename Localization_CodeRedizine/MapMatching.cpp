@@ -543,9 +543,11 @@ int MapMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 	}
 #endif
 	
+	double inliers = (third_best < mParams.inlierThresh ? mParams.inlierThresh : third_best);
+
 	//Remove all images with less than the second best number of inliers
 	for (map<int, double>::iterator i = image_inliers.begin(); i != image_inliers.end(); ++i){
-		if (i->second >= third_best && tempR.size() < 3){
+		if (i->second >= inliers && tempR.size() < 3){
 			tempR.push_back(make_pair(db[i->first].getIndex(), temp_R[i->first]));
 		}
 	}
