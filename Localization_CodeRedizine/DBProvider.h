@@ -1,4 +1,10 @@
 #pragma once
+/**
+* Author: Chris Card
+*
+* This class loads in the xml files that contian the precomputed descriptors and
+* key points.
+*/
 #include "ImageProvider.h"
 
 template<typename ImType>
