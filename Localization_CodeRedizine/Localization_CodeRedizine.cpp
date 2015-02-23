@@ -28,7 +28,7 @@ const static int EXAMIN = 4;
 int _tmain(int argc, _TCHAR* argv[])
 {
 #if DEBUG
-	bool map_or_match = true;
+	bool map_or_match = false;
 	if(map_or_match){
 		MapBuilder<MyMat,DBProvider<MyMat>,MapMatching<MyMat>> mb("Images\\db_images_new_3rd.txt");
 		mb.buildMap("Test_map_3");
@@ -36,7 +36,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		//Flags for what to run
 		int option = EXAMIN;
 
-		LocalizationManager<MyMat,DBProvider<MyMat>,LSHMatching<MyMat>> manage("Images\\local_map.txt");
+		LocalizationManager<MyMat,DBProvider<MyMat>,LSHMatching<MyMat>> manage("Images\\db_images_new.txt");
 		DBProvider<MyMat> db;
 		switch(option){
 		case VIDEO:
@@ -53,7 +53,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			break;
 		case EXAMIN:
-			manage.evaluateMatches("Images\\local_map_test_set\\local_map_test_image_0001.JPG");
+			manage.evaluateMatches("Images\\local_map_test_set\\local_map_test_image_0002.JPG");
 			break;
 		default:
 			cerr << "Incorrect options" << endl;
