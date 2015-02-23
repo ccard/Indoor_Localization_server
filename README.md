@@ -77,7 +77,7 @@ turned on:
 &nbsp;&nbsp;To compile in Visual Studio&reg; simply build in the desired mode, _Release_ is the perfered mode.
 
 ## Linux ##
-&nbsp;&nbsp;___Not Supported__ at this time.
+&nbsp;&nbsp;__Not Supported__ at this time.
 
 ## VS Compilation ##
 &nbsp;&nbsp;You should only have to do a build/rebuild on the project and it should all work if you set up the [environment](#environment) correctly.
@@ -87,7 +87,7 @@ turned on:
 
 ---------
 # Program Parts #
-&nbsp;This section describes the different classes, interfaces, global variables, and precompiler flags.
+&nbsp;This section describes the different classes, interfaces, and precompiler flags.
 
 ## Interfaces ##
 &nbsp;&nbsp;These interfaces represent the core of the code as most if not all of the class extend one of them.  If you wish to add classes to this code they should be template classes 
@@ -101,7 +101,7 @@ code. These interfaces are also template classes that perform compile time type 
 &nbsp;&nbsp; These classes are what implements the program and test the algorithm.
  - Classes derived from `ImageProvider<T>`:
   - `DBProvider<ImType>`: This class loads in xml files that contain the precomputed descriptors and key points of the images along with the original images location.  The text file that it opens is expected to be in the following format `<xml file location> <original image file location>`.  It how ever does not load in the original image file just the location.
-  - `MatProvider<TmgType>`: This class reads in the original images and computes their descriptors.  This class should be used only if the descriptors where not precomputed as it takes significantly longer to run than `DBProvider<ImType>`. __Note__: it is recomend that the descriptors and key points be precomputed as this reduces the db loading time by at least an order of magnitude (look at [FileStorage](http://docs.opencv.org/modules/core/doc/xml_yaml_persistence.html) for how to save the descriptors and key points to xml files).
+  - `MatProvider<TmgType>`: This class reads in the original images and computes their descriptors.  This class should be used only if the descriptors where not precomputed as it takes significantly longer to run than `DBProvider<ImType>`. The input file must be in the format `<Image directory location>` and the directory must have a `images.txt` file in the format `<Image file name>`.__Note__: it is recomend that the descriptors and key points be precomputed as this reduces the db loading time by at least an order of magnitude (look at [FileStorage](http://docs.opencv.org/modules/core/doc/xml_yaml_persistence.html) for how to save the descriptors and key points to xml files).
  - Classes derived from `Matcher<ImType>`:
   - `LSHMatching<ImType>`: This class trains a LSH matcher and then uses it to localize a query image.  This class implements the actual indoor localization algorithm and is the core of all the provided code.
   - `MapMatching<ImType>`: This class is the same as `LSHMatching<ImType>` except that it provides an additional find method that returns the top 3 matches with > t inliers to the fundamental matrix model along with there rotation and translation matricies.
@@ -114,3 +114,6 @@ code. These interfaces are also template classes that perform compile time type 
   - `LocalizationManager<ImgType, ImgProviderType, ImgMatcherType>`: ImgType must be a drived class of `ImageContainer`, ImgProviderType must be derived class of `ImageProvider<T>`, and ImgMatcherType must be a derived class of `Matcher<ImgType>`.  This class is used to load the database of images and then match query images to the database so as to abstract the management of the differnt components and only one class needs to be used to run the provided code.  This is where the interfaces are most useful because any class that derives the interfaces can be used in conjunction with this class.
   - `MapBuilder< ImgType, ImgProviderType, ImgMatcherType>`: ImgType must be a drived class of `ImageContainer`, ImgProviderType must be derived class of `ImageProvider<T>`, and ImgMatcherType must be a derived class of `Matcher<ImgType>`. This class is simalar to `LocalizationManager<ImgType, ImgProviderType, ImgMatcherType>` except that it attempts to find the relation ships between all the images in the database so a topological map can be built.  It also uses `MapMatching<ImType>` instead of `LSHMatching<ImType>`.
  - `Localization_CodeRedizine`: contains the main method and is used for testing.
+
+## Precompiler Flages ##
+&nbsp;&nbsp;The preocompiler flags turn on and off different sections of code so that various levels of information about execution can be obtained.  The flags `DEBUG` and `INSPECT` are defined in `ImageContainer` for standard exectution both should be set to 0.  If you want to run tests that are already written set `DEBUG` to 1.  If you want to inspect the images as the program executes set `DEBUG` and `INSPECT` to 1.  To turn on the `_OPENMP` flag simply enamble the openmp setting in the properties as described in the [environment](#environment) section.
