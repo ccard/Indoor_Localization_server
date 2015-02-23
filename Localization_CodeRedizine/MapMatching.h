@@ -1,33 +1,32 @@
 #pragma once
 /**
- * Author: Chris Card
- * This class implements the use of LSH to perform the matching
- */
+* Author: Chris Card
+* This class is the matching class that will be used to construct the map and has find method that returns the rotation
+* and translation
+*/
+
 #include "Matcher.h"
 #include "MyDMatch.h"
+#include "LSHMatching.h"
 
-#ifndef _LSHTYPES
-#define _LSHTYPES
+#ifndef _MAPMATCHTYPES
+#define _MAPMATCHTYPES
 //Defines type defs and structures to return from the methods
+typedef pair<Mat, vector<unsigned int>> Fund; //Defines pair from fundimentl matrix to the inliers array
+typedef map<int, Fund> FundRess; //What is returned form finding fundimental matricies from multiple imagesv
 
-typedef map<int,vector<MyDMatch>> ImgMatches; //General image matching structure
-typedef map<int,ImgMatches> KNNRes; //The structure returned from KNN method call
-typedef pair<vector<Point2f>,vector<Point2f>> ObjectScene; //Defines the object secene relation first part of pair is the object(db), second part is the scene(query)
-typedef pair<bool,ImgMatches> FilteredRes; //This is what is returned from the filtering stage
-#if INSPECT
-typedef pair<Mat,vector<unsigned int>> Fundimental; //Defines pair from fundimentl matrix to the inliers array
-#else
-typedef pair<Mat, int> Fundimental;
-#endif
-typedef map<int,Fundimental> FundRes; //What is returned form finding fundimental matricies from multiple images
+typedef pair<Mat,Mat> Rat; //What is returned from find, firt is the image number second pair is R,t
+
+typedef pair<size_t, Rat> MapImages;
+typedef vector<MapImages> NearImages;
 #endif
 
 template <typename ImType>
-class LSHMatching :
+class MapMatching :
 	public Matcher<ImType>
 {
 public:
-	LSHMatching(){ 
+	MapMatching(){ 
 		lastIndex = 0;
 		lshMatcher = FlannBasedMatcher(new flann::LshIndexParams(1,31,2));
 		if(!mParams._init){
@@ -56,6 +55,8 @@ public:
 	}
 
 	int find(ImageContainer& query, ImageProvider<ImType> &db);
+
+	int find(ImageContainer& query, ImageProvider<ImType> &db, NearImages &r);
 
 	void train(){
 		lshMatcher.train();	
@@ -198,6 +199,17 @@ private:
 	*/
 	int verify(ImgMatches &matches, ImageProvider<ImType> &db, ImageContainer &query);
 
+	int verify(ImgMatches &matches, ImageProvider<ImType> &db, ImageContainer &query, NearImages &r);
+
+	/**
+	 * Find the (R)otation and (t)ranslation matricies from F
+	 *
+	 * @param: the fundamental matrix
+	 *
+	 * @return: the Rat object with the first being R and second being t
+	 */
+	Rat findRandT(Mat F, MyDMatch &dm, Size s);
+
 	/**
 	* This Function builds the fundimental matricies that relate one image to another
 	* and is used to provide the fundimental matrix as well as the number of inliers to
@@ -208,7 +220,7 @@ private:
 	* @return: a map of ints to pairs, first of the pairs is the fundimental matrix the second is
 	* the inliers 1 for inlier 0 for not
 	*/
-FundRes buildFundimentalMat(ImgMatches matches);
+	FundRess buildFundimentalMat(ImgMatches matches);
 
 	/**
 	* Finds the fundimental matrix and returns it along with the inliers
@@ -217,7 +229,7 @@ FundRes buildFundimentalMat(ImgMatches matches);
 	*
 	* @return: par from thr fund matrix to the inliers
 	*/
-Fundimental findFund(ObjectScene train_scene);
+	Fund findFund(ObjectScene train_scene);
 
 	/**
 	* This function rematches the points to ensure a better fit then what lsh might return
@@ -228,17 +240,18 @@ Fundimental findFund(ObjectScene train_scene);
 	* 
 	* @return: vector of mydmathc objects
 	*/
-ImgMatches doubleCheckMatches(map<int, ImType> &db, ImageContainer &query, double min_dist = 0.2);
+	ImgMatches doubleCheckMatches(map<int, ImType> &db, ImageContainer &query, double min_dist = 0.2);
 
 	/**
 	 * Sums the inliers 
 	 */
 	int sumInliers(vector<unsigned int> &inliers);
 
-#if INSPECT
 	int sumInliers(vector<MyDMatch> &matches, vector<unsigned int> &inliers, vector<MyDMatch> &fittingMatches);
+
+#if INSPECT
 	void showMatches(ImType &db, ImageContainer &query, vector<MyDMatch> &inliers, Mat F,bool step = false);
 	void inspectEpipole(ImType &db, ImageContainer &query, vector<MyDMatch> &inliers, Mat F);
-	void showEpilines(ImType &db, ImageContainer &query, Mat F);
 #endif
 };
+

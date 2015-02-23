@@ -1,4 +1,10 @@
 #pragma once
+/**
+* Author: Chris Card
+*
+* This class loads in the xml files that contian the precomputed descriptors and
+* key points.
+*/
 #include "ImageProvider.h"
 
 template<typename ImType>
@@ -13,91 +19,20 @@ public:
 		open(file);
 	}
 
-	bool open(string file){
-		in = ifstream(file);
-		if(!in.is_open()){
-			ASSERT(false,"Failed to open file: "<<file);
-		} else {
-			db = readDB();
-		}
-		return true;
-	}
+	bool open(string file);
 
-	ImType getImage(size_t index){
-		if(index < 0 || index >= db.size()){
-			return ImType();
-		}
-		return db[index];
-	}
+	ImType getImage(size_t index);
 
-	ImType operator[] (size_t index){
-		if(index < 0 || index >= db.size()){
-			return ImType();
-		}
-		return db[index];
-	}
+	ImType operator[] (size_t index);
 
-	vector<ImType> getImages(){
-		return db;
-	}
+	vector<ImType> getImages();
 
-	string getImageLocation(size_t index){
-		if(index < 0 || index >= db.size()){
-			return "No where";
-		}
-		return db[index].getName();
-	}
+	string getImageLocation(size_t index);
 
-	bool saveImages(){
-		return false;
-	}
+	bool saveImages();
 
 private:
-	vector<ImType> readDB(){
-		vector<ImType> ret;
-		string line ="";
-#if DEBUG
-		int size = 0;
-#endif
-		while(!in.eof()){
-			getline(in,line);
-			stringstream stream(line);
-			istream_iterator<string> begin(stream);
-			istream_iterator<string> end;
-			vector<string> vstring(begin,end);
-			string xml = vstring[0];
-			string img_file = vstring[1];
-			FileStorage fs(xml,FileStorage::READ);
-			Mat des;
-			vector<KeyPoint> kps;
-			fs["descriptor"] >> des;
-			read(fs["keypoints"], kps);
-			fs.release();
-#if DEBUG
-			size+=kps.size();
-#endif
-			ret.push_back(ImType(img_file,des,kps));
-		}
-		in.close();
-#if DEBUG
-		cout << "number of feature points: "<<size << endl;
-#endif
-		return ret;
-	}
+	vector<ImType> readDB();
 
-
-	vector<string> buildRelativeFilePaths(){
-		string relativepath;
-		vector<string> ret;
-		while(in >> relativepath){
-			ifstream np(relativepath+"images.txt");
-			string imgname;
-			while(np >> imgname){
-				ret.push_back(relativepath+imgname);
-			}
-			np.close();
-		}
-		in.close();
-		return ret;
-	}
+	vector<string> buildRelativeFilePaths();
 };

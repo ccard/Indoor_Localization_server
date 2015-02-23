@@ -40,6 +40,9 @@ public:
 
 	~ImageProvider(){
 		db.clear();
+		if(in.is_open()){
+			in.close();
+		}
 	}
 
 	/**
