@@ -29,7 +29,7 @@ public:
 
 	string getImageLocation(size_t index);
 
-	bool saveImages(string outputlist, string outputdir);
+	bool saveImages(string outputlistfile, string outputdir);
 
 private:
 	vector<ImType> readDB();

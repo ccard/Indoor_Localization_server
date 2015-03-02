@@ -4,6 +4,7 @@
 * This class provides images that are not in an xml format
 */
 #include "ImageProvider.h"
+#include <sys/stat.h>
 
 
 template<typename ImgType>
@@ -39,5 +40,7 @@ private:
 	* @return: a list of all files to open and load
 	*/
 	vector<string> buildRelativeFilePaths();
+
+	pair<string,bool> saveImage(ImgType img,string dir);
 };
 

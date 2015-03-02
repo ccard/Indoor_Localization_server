@@ -42,8 +42,34 @@ string MatProvider<ImgType>::getImageLocation(size_t index){
 }
 
 template<typename ImgType>
-bool MatProvider<ImgType>::saveImages(string outputlist, string outputdir){
-	return false;
+bool MatProvider<ImgType>::saveImages(string outputlistfile, string outputdir){
+	int num_complete = 0;
+	map<string,string> image_list;
+	cout << "Writing image files..." << endl;
+	for(vector<ImgType>::iterator i = db.begin(); i != db.end(); ++i){
+		++num_complete;
+		pair<string,bool> tmp = saveImage(*i,outputdir);
+		if(!tmp.second){
+			return false;
+		}
+		image_list.insert(make_pair(tmp.first,i->getName()));
+		cout << "\r" << ((i/db_size)*100) << "%            " << flush;
+	}
+	cout << endl;
+
+	cout << "Writing to " << outputlistfile << "..." << endl;
+	ofstream out(outputlistfile);
+	if(!out.is_open()){
+		cerr << "Failed to open file " << outputlistfile << endl;
+		return false;
+	}
+	for(map<string,string>::iterator i = image_list.begin(); i != image_list.end(); ++i){
+		string tmps = i->first+" "+i->second;
+		out << tmps << endl;
+	}
+	out.close();
+
+	return true;
 }
 
 template<typename ImgType>
@@ -102,4 +128,28 @@ vector<string> MatProvider<ImgType>::buildRelativeFilePaths(){
 	}
 	in.close();
 	return ret;
+}
+
+template<typename ImgType>
+pair<string,bool> MatProvider<ImgType>::saveImage(ImgType img, string dir){
+	struct stat info;
+	if(stat(dir, &info) != 0){
+		cerr << "Can not access: " << dir << endl;
+		return make_pair("",false);
+	} else if(info.st_mode & S_IFDIR){
+
+	} else {
+		cerr << "This is not a directory: " << dir << endl;
+		return make_pair("",false);
+	}
+	string name = img.getName();
+	name = name.substr(name.find_last_of('\\')+1,name.size());
+	string name = dir+name+".xml";
+	Mat des;
+	img.getDescriptor().copyTo(des);
+	FileStorage fs(name,FileStorage::WRITE);
+	fs << "keypoints" << img.getKeyPoints();
+	fs << "descriptor" << des;
+	fs.release();
+	return make_pair(name,true);
 }
