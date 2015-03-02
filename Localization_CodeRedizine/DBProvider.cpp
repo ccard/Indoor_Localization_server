@@ -42,7 +42,7 @@ string DBProvider<ImType>::getImageLocation(size_t index){
 }
 
 template<typename ImType>
-bool DBProvider<ImType>::saveImages(){
+bool DBProvider<ImType>::saveImages(string outputlist, string outputdir){
 	return false;
 }
 template<typename ImType>

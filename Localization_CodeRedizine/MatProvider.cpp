@@ -42,7 +42,7 @@ string MatProvider<ImgType>::getImageLocation(size_t index){
 }
 
 template<typename ImgType>
-bool MatProvider<ImgType>::saveImages(){
+bool MatProvider<ImgType>::saveImages(string outputlist, string outputdir){
 	return false;
 }
 

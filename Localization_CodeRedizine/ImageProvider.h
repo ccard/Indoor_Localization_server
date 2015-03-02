@@ -106,7 +106,7 @@ public:
 	 *
 	 * @return: true if it was able to save false otherwise
 	 */
-	virtual bool saveImages() = 0;
+	virtual bool saveImages(string outputlist, string outputdir) = 0;
 
 	void addImage(T image){
 		db.push_back(image);
