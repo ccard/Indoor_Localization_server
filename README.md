@@ -117,3 +117,6 @@ code. These interfaces are also template classes that perform compile time type 
 
 ## Precompiler Flages ##
 &nbsp;&nbsp;The preocompiler flags turn on and off different sections of code so that various levels of information about execution can be obtained.  The flags `DEBUG` and `INSPECT` are defined in `ImageContainer` for standard exectution both should be set to 0.  If you want to run tests that are already written set `DEBUG` to 1.  If you want to inspect the images as the program executes set `DEBUG` and `INSPECT` to 1.  To turn on the `_OPENMP` flag simply enamble the openmp setting in the properties as described in the [environment](#environment) section.
+
+# How to Run #
+&nbsp;To run the code as provided use `Localization_CodeRedizine.cpp` as an example.
