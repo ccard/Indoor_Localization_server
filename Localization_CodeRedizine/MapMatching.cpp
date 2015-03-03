@@ -678,8 +678,8 @@ Rat MapMatching<ImType>::findRandT(Mat F, MyDMatch &dm, Size s){
 		Mat recon;
 		triangulatePoints(k*M1, k*M2, d, q, recon);//recontstructs the 3d points
 
-		//Inversts H from camera 1 to 2 to 2 to 1
-		Mat M2_i = i->inv();
+		//Inversts H from camera 2 to 1
+		Mat M2_i = *i;
 
 		Mat_<double> P1est = recon.col(0);//The db point 
 		Mat_<double> P2est = M2_i*P1est;//the db point translated to the query camera
