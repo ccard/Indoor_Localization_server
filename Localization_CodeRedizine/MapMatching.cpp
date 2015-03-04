@@ -614,7 +614,7 @@ Rat MapMatching<ImType>::findRandT(Mat F, MyDMatch &dm, Size s){
 		0, 2789.596, s.height / 2,
 		0, 0, 1);
 	Mat k(temp_k);
-	Mat E = k.t()*F*k; //Essential matrix
+	Mat E = k.t()*F.t()*k; //Essential matrix
 
 	//Singular Value Decomposition(SVD) of the essential matrix to get rotation and
 	//Translation matricies
@@ -666,26 +666,36 @@ Rat MapMatching<ImType>::findRandT(Mat F, MyDMatch &dm, Size s){
 		0, 0, 0, 1);
 	M2s.push_back(Mat(M2_22));
 
+	Mat u1 = (Mat_<double>(3,1) << dm.query_kp.pt.x,dm.query_kp.pt.y,1);
+	Mat u2 = (Mat_<double>(3,1) << dm.train_kp.pt.x,dm.train_kp.pt.y,1);
+	Mat_<double> tmp_q = k.inv()*u1;
+	Mat_<double> tmp_d = k.inv()*u2;
+	Mat q = tmp_q.rowRange(0,2);
+	Mat d = tmp_d.rowRange(0,2);
 	//The points to test the H matrix
-	vector<Point2f> q, d;
-	q.push_back(dm.query_kp.pt);
-	d.push_back(dm.train_kp.pt);
+	//vector<Point2f> q, d;
+	//q.push_back(dm.query_kp.pt);
+	//d.push_back(dm.train_kp.pt);
 
 	int index = 0;
 
 	for (vector<Mat>::iterator i = M2s.begin(); i != M2s.end(); ++i){
-		Mat M2((*i), Range(0, 3), Range(0, 4));//Recovers a 3x4 matrix from i
-		Mat recon;
-		triangulatePoints(k*M1, k*M2, d, q, recon);//recontstructs the 3d points
-
+		Mat H_c1_c2 = Mat(i->inv());
+		Mat M2 = H_c1_c2.rowRange(0,3);//Recovers a 3x4 matrix from i
+		Mat P1;
+		triangulatePoints(M1, M2, d, q, P1);//recontstructs the 3d points
+		P1 = P1/P1.at<double>(3,0);
+		Mat P2 = M2*P1;
+		/**
 		//Inversts H from camera 2 to 1
 		Mat M2_i = *i;
 
 		Mat_<double> P1est = recon.col(0);//The db point 
 		Mat_<double> P2est = M2_i*P1est;//the db point translated to the query camera
+		*/
 
 		//if both points are in front of both cameras then we found the rotation and translation
-		if (P1est(2) > 0 && P2est(2) > 0){
+		if (P1.at<double>(2,0) > 0 && P2.at<double>(2,0) > 0){
 			break;
 		}
 		++index;
