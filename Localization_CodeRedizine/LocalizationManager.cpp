@@ -241,7 +241,9 @@ void LocalizationManager<ImgType, ImgProviderType, ImgMatcherType>::evaluateMatc
 	resize(q, q, Size(612, 816));
 	q.makeMask();
 	q.initDescriptor();
+	clock_t orb_start = clock();
 	q.calcDescriptor();
+	cout << " Orb time: " << ((float)(clock()-orb_start))/CLOCKS_PER_SEC << " sec" << endl;
 	clock_t start = clock();
 	int image = match.find(q, db);
 	cout << "time: " << ((float)(clock() - start)) / CLOCKS_PER_SEC << endl;
