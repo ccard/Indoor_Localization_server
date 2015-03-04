@@ -22,7 +22,13 @@ bool LSHMatching<ImType>::knnMatch(ImageContainer &query, ImageProvider<ImType> 
 	KNNRes &match, vector<Mat> &masks = vector<Mat>()){
 	vector<vector<DMatch>> m;
 	const Mat des = query.getDescriptor();
+#if DEBUG
+	clock_t start = clock();
+#endif
 	lshMatcher.knnMatch(des, m, mParams.k);
+#if DEBUG
+	cout << "LSH Matching time for k=" << mParams.k << ", is " << ((float)(clock() - start)) / CLOCKS_PER_SEC << " sec" << endl;
+#endif
 	//Converts DMatch to MyDMatch
 	match = convertDMatch(m, db, query);
 	return match.size() > 0;
@@ -412,7 +418,7 @@ int LSHMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 
 #if INSPECT
 	if(img >= 0){
-		showEpilines(db[img],query,fundamentals[img].first);
+		//showEpilines(db[img],query,fundamentals[img].first);
 	}
 #endif
 	if (best_fit >= mParams.inlierThresh){
@@ -450,7 +456,7 @@ int LSHMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 		}
 	}
 	if(img >= 0){
-		showEpilines(db[img],query,fundimentals[img].first);
+		//showEpilines(db[img],query,fundimentals[img].first);
 	}
 #else
 	//Find the image with the best number of inliers

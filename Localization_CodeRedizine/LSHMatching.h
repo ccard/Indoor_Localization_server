@@ -5,6 +5,9 @@
  */
 #include "Matcher.h"
 #include "MyDMatch.h"
+#if DEBUG
+#include <time.h>
+#endif
 
 #ifndef _LSHTYPES
 #define _LSHTYPES
