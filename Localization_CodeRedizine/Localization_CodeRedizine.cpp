@@ -88,9 +88,9 @@ int _tmain(int argc, _TCHAR* argv[])
 	//database orders of magnitude faster
 	if (CREATEDB == OPTION){
 		MatProvider<MyMat> db;
-		//Replace "<relative path> + <file name>" with your file and must
+		//Replace "<file name>" with your file and must
 		//be in the format descirbed in the How to Run section in README.md
-		if (db.open("<relative path> + <file name>")){
+		if (db.open("<file name>")){
 			//Replace "<list output file>" with the file name that will store the list
 			//of database xml files
 			//Replace "<directory to save the db>" with the directory that the xml files
@@ -107,12 +107,12 @@ int _tmain(int argc, _TCHAR* argv[])
 		/*
 			Option 1 (if descriptors where precomputed using CREATEDB option):
 			   - MyMat can be replaced with any class that extends ImageContainer
-			   - Replace "<relative path> + <file name>" where "<file name>" is the 
+			   - Replace "<file name>" where "<file name>" is the 
 			     "<list output file>" created in the CREATEDB section
 			Option 2 (if descriptors where not precomputed using CREATEDB option):
 			   - MyMat must be used
 			   - DBProvider<MyMat> must be replaced with MatProvider<MyMat>
-			   - Replace "<relative path> + <file name>" with your file and must
+			   - Replace "<file name>" with your file and must
 				 be in the format descirbed in the How to Run section in README.md
 		 */
 		MapBuilder<MyMat, DBProvider<MyMat>, MapMatching<MyMat>> mb("<relative path> + <file name>");
@@ -123,7 +123,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 	// Match an image to the database
 	else if (MATCH == OPTION){
-		//Replace "<image file>" with the query image file name
+		//Replace "<image file>" with the query image file name (i.e. '*.jpg')
 		Mat input_image = imread("<image file>");
 		MyMat query_image;
 		input_image.copyTo(query_image);
@@ -135,12 +135,12 @@ int _tmain(int argc, _TCHAR* argv[])
 		/*
 			Option 1 (if descriptors where precomputed using CREATEDB option):
 			   - MyMat can be replaced with any class that extends ImageContainer
-			   - Replace "<relative path> + <file name>" where "<file name>" is the
+			   - Replace "<file name>" where "<file name>" is the
 				 "<list output file>" created in the CREATEDB section
 			Option 2 (if descriptors where not precomputed using CREATEDB option):
 				- MyMat must be used
 				- DBProvider<MyMat> must be replaced with MatProvider<MyMat>
-				- Replace "<relative path> + <file name>" with your file and must
+				- Replace "<file name>" with your file and must
 				  be in the format descirbed in the How to Run section in README.md
 		*/
 		LocalizationManager<MyMat, DBProvider<MyMat>, LSHMatching<MyMat>> lm("<relative path> + <file name>");
