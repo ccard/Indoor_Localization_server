@@ -66,7 +66,7 @@ bool MatProvider<ImgType>::saveImages(string outputlistfile, string outputdir){
 		}
 	}
 #else
-	int num_complete = 0;
+	int num_complete = 0,db_size = db.size();
 	map<string,string> image_list;
 	cout << "Writing image files..." << endl;
 	for(vector<ImgType>::iterator i = db.begin(); i != db.end(); ++i){
@@ -76,7 +76,7 @@ bool MatProvider<ImgType>::saveImages(string outputlistfile, string outputdir){
 			return false;
 		}
 		image_list.insert(make_pair(tmp.first,i->getName()));
-		cout << "\r" << ((i/db_size)*100) << "%            " << flush;
+		cout << "\r" << ((num_complete/db_size)*100) << "%            " << flush;
 	}
 	cout << endl;
 #endif
@@ -157,7 +157,7 @@ vector<string> MatProvider<ImgType>::buildRelativeFilePaths(){
 template<typename ImgType>
 pair<string,bool> MatProvider<ImgType>::saveImage(ImgType img, string dir){
 	struct stat info;
-	if(stat(dir, &info) != 0){
+	if(stat(dir.c_str(), &info) != 0){
 		cerr << "Can not access: " << dir << endl;
 		return make_pair("",false);
 	} else if(info.st_mode & S_IFDIR){
@@ -168,7 +168,7 @@ pair<string,bool> MatProvider<ImgType>::saveImage(ImgType img, string dir){
 	}
 	string name = img.getName();
 	name = name.substr(name.find_last_of('\\')+1,name.size());
-	string name = dir+name+".xml";
+	name = dir+name+".xml";
 	Mat des;
 	img.getDescriptor().copyTo(des);
 	FileStorage fs(name,FileStorage::WRITE);

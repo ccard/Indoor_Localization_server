@@ -52,12 +52,12 @@ public:
 		}
 	}
 
-	int operator ==(const ImageContainer &lhs){
+	int operator ==(ImageContainer &lhs){
 		return match.find(lhs,db);
 	}
 
-	const ImgProviderType getDB(){
-		return db;
+	ImgType getDBImage(size_t index){
+		return db[index];
 	}
 
 #if DEBUG
