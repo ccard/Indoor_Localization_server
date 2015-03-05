@@ -118,5 +118,38 @@ code. These interfaces are also template classes that perform compile time type 
 ## Precompiler Flages ##
 &nbsp;&nbsp;The preocompiler flags turn on and off different sections of code so that various levels of information about execution can be obtained.  The flags `DEBUG` and `INSPECT` are defined in `ImageContainer` for standard exectution both should be set to 0.  If you want to run tests that are already written set `DEBUG` to 1.  If you want to inspect the images as the program executes set `DEBUG` and `INSPECT` to 1.  To turn on the `_OPENMP` flag simply enamble the openmp setting in the properties as described in the [environment](#environment) section.
 
+--------------------------------------------------------------------
 # How to Run #
-&nbsp;To run the code as provided use `Localization_CodeRedizine.cpp` as an example.
+&nbsp;This section describes how to run the provided code and the file formats that the provided code expects. If you wish to use your own classes that extend the interfaces the comments and sections below can be ignored but the physical lines of code in `Localization_CodeRedezine.cpp` shouldn't need to be derastically changed to accept your new class (so long as they extend the interfaces).
+
+## DB setup ##
+&nbsp;&nbsp;This section describes how to set up the image database and the corresponding precomputed descriptor database.
+
+## Image DB ##
+&nbsp;&nbsp;&nbsp;The first thing that needs to be done is to set up the text files and the directories that will be used to access the orignal images (_i.e._ the "*.jpg" files). First create a `Images\` directory in the provided `Localization_CodeRedizine\` directory. Then create `<Image dir 1>`,....,`<Image dir n>` in the newly created `Images\` directory, these image directories will contain your original images. Each `<Image dir i>` will have an `images.txt` file describing the image files in the directory and is expected to be in the following format:
+```
+<Image file 1>
+<Image file 2>
+      .
+      .
+      .
+<Image file n>
+```
+Then in the `Localization_CodeRedizine\` directory there will be a `<file name>.txt` file that gives list all of the image directories that you created and will have the following format:
+```
+Images\\<Image dir 1>\\
+        .
+        .
+        .
+Images\\<Image dir n>\\
+```
+This is what is expected of the original image db (__Note:__ all '*.txt' files just described need to be ASCII encoded).
+
+## Precomputed descriptors DB (Recomended) ##
+&nbsp;&nbsp;&nbsp;This creates the database of precomputed descriptors for the image db described in the previos section. It is ___recomended___ that this be done because it reduces the db loading time by at least an order of magnitude maybe more. To precompute the descriptors set `OPTION = CREATEDB` in `Localization_CodeRedezine.cpp` and follow the comments in the appropriate if statement to load the image database.  __Note:__ after the new files are created and saved, open `<list output file>` and remove the blank line at the end of the file if this is not done the next steps will result in errors.
+
+## Build the Basic Map ##
+&nbsp;&nbsp;&nbsp;This creates the basic map between images and their R and T matricies. Using the precomputed descriptor DB (___recomended___) set `OPTION = CREATEMAP` in `Localization_CodeRedezine.cpp` and follow the comments in the appropriate if statement to create the map.
+
+## Match Against the database ##
+&nbsp;&nbsp;&nbsp;This creates the database of precomputed descriptors for the image db described in the previos section. Using the precomputed descriptor DB (___recomended___) set `OPTION = MATCH` in `Localization_CodeRedezine.cpp` and follow the comments in the appropriate if statement to match to the database. If it finds a match it will display it.
