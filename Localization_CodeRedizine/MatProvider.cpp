@@ -43,6 +43,29 @@ string MatProvider<ImgType>::getImageLocation(size_t index){
 
 template<typename ImgType>
 bool MatProvider<ImgType>::saveImages(string outputlistfile, string outputdir){
+	
+#if _OPENMP
+	cout << "Writing image files..." << endl;
+	map<string,string> image_list,tmp_list;
+#pragma omp parallel private(tmp_list) shared(image_list,outputdir) num_threads(NUM_THREADS)
+	{
+#pragma omp for
+		for (int i = 0; i < db.size(); ++i){
+			ImgType tmp_img(db[i]);
+			pair<string, bool> tmp = saveImage(tmp_img, outputdir);
+			if (!tmp.second){
+				return false;
+			}
+			tmp_list.insert(make_pair(tmp.first, tmp_img.getName()));
+		}
+#pragma omp critical
+		{
+			for (map<string, string>::iterator t = tmp_list.begin(); t != tmp_list.end(); ++t){
+				image_list.insert(t);
+			}
+		}
+	}
+#else
 	int num_complete = 0;
 	map<string,string> image_list;
 	cout << "Writing image files..." << endl;
@@ -56,6 +79,7 @@ bool MatProvider<ImgType>::saveImages(string outputlistfile, string outputdir){
 		cout << "\r" << ((i/db_size)*100) << "%            " << flush;
 	}
 	cout << endl;
+#endif
 
 	cout << "Writing to " << outputlistfile << "..." << endl;
 	ofstream out(outputlistfile);
