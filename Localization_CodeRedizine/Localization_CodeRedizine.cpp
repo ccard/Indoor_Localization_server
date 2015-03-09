@@ -38,15 +38,15 @@ int _tmain(int argc, _TCHAR* argv[])
 	  !!!   example code                                          !!!
 	  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	*/
-	bool map_or_match = true;
+	bool map_or_match = false;
 	if(map_or_match){
 		MapBuilder<MyMat,DBProvider<MyMat>,MapMatching<MyMat>> mb("Images\\db_images_new_3rd.txt");
 		mb.buildMap("Test_map_fix");
 	} else {
 		//Flags for what to run
-		int option = EXAMIN;
+		int option = ROCTEST;
 
-		LocalizationManager<MyMat,DBProvider<MyMat>,LSHMatching<MyMat>> manage("Images\\db_images_new_2.txt");
+		LocalizationManager<MyMat,DBProvider<MyMat>,LSHMatching<MyMat>> manage("Images\\roc_db_TP_and_TN.txt");
 		DBProvider<MyMat> db;
 		switch(option){
 		case VIDEO:
@@ -58,8 +58,8 @@ int _tmain(int argc, _TCHAR* argv[])
 		case VIEWSTATS:
 			break;
 		case ROCTEST:
-			if(db.open("Images\\local_map_test_set.txt")){
-				manage.performTestingStats(db,"local_map_test_20.csv");
+			if(db.open("Images\\roc_testset_TP_and_FN.txt")){
+				manage.performTestingStats(db,"roc_TP_and_FP_35.csv");
 			}
 			break;
 		case EXAMIN:
