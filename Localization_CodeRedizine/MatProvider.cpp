@@ -109,11 +109,13 @@ vector<ImgType> MatProvider<ImgType>::readDB(){
 #pragma omp for
 		for (int i = 0; i < images.size(); ++i){
 			ImgType temp;
-			imread(images[i]).copyTo(temp);
+			string tmp_name = images[i];
+			imread(tmp_name).copyTo(temp);
 			resize(temp, temp, Size(612, 816));
 			temp.initDescriptor();
 			temp.makeMask();
 			temp.calcDescriptor();
+			temp.setName(tmp_name);
 			priv.insert(make_pair(i, temp));
 		}
 #pragma omp critical
@@ -124,7 +126,7 @@ vector<ImgType> MatProvider<ImgType>::readDB(){
 			}
 	}
 #else
-	vector<ImgType> ret = vector<ImgType>(images.size());
+	vector<ImgType> ret;
 	for (vector<string>::iterator i = images.begin(); i != images.end(); ++i){
 		ImgType temp;
 		imread(*i).copyTo(temp);
@@ -132,6 +134,7 @@ vector<ImgType> MatProvider<ImgType>::readDB(){
 		temp.initDescriptor();
 		temp.makeMask();
 		temp.calcDescriptor();
+		temp.setName(*i);
 		ret.push_back(temp);
 	}
 #endif
@@ -155,9 +158,9 @@ vector<string> MatProvider<ImgType>::buildRelativeFilePaths(){
 }
 
 template<typename ImgType>
-pair<string,bool> MatProvider<ImgType>::saveImage(ImgType img, string dir){
+pair<string,bool> MatProvider<ImgType>::saveImage(ImgType &img, string dir){
 	struct stat info;
-	if(stat(dir.c_str(), &info) != 0){
+	/*if(stat(dir.c_str(), &info) != 0){
 		cerr << "Can not access: " << dir << endl;
 		return make_pair("",false);
 	} else if(info.st_mode & S_IFDIR){
@@ -165,7 +168,7 @@ pair<string,bool> MatProvider<ImgType>::saveImage(ImgType img, string dir){
 	} else {
 		cerr << "This is not a directory: " << dir << endl;
 		return make_pair("",false);
-	}
+	}*/
 	string name = img.getName();
 	name = name.substr(name.find_last_of('\\')+1,name.size());
 	name = dir+name+".xml";

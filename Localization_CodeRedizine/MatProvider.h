@@ -41,6 +41,6 @@ private:
 	*/
 	vector<string> buildRelativeFilePaths();
 
-	pair<string,bool> saveImage(ImgType img,string dir);
+	pair<string,bool> saveImage(ImgType &img,string dir);
 };
 
