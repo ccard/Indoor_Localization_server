@@ -250,7 +250,7 @@ void LocalizationManager<ImgType, ImgProviderType, ImgMatcherType>::evaluateMatc
 	namedWindow("Query", CV_WINDOW_KEEPRATIO);
 	namedWindow("Retrieved", CV_WINDOW_KEEPRATIO);
 	if (image > ImgMatcherType::ERROR){
-		imshow("Query", q);
+		imshow("Query", drawKeyPoints(q));
 		if (db[image].loadImage()){
 			Mat rt;
 			db[image].getMat(rt);
