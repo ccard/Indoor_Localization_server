@@ -418,7 +418,7 @@ int LSHMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 
 #if INSPECT
 	if(img >= 0){
-		//showEpilines(db[img],query,fundamentals[img].first);
+		showEpilines(db[img],query,fundamentals[img].first);
 	}
 #endif
 	if (best_fit >= mParams.inlierThresh){
@@ -456,7 +456,7 @@ int LSHMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 		}
 	}
 	if(img >= 0){
-		//showEpilines(db[img],query,fundimentals[img].first);
+		showEpilines(db[img],query,fundimentals[img].first);
 	}
 #else
 	//Find the image with the best number of inliers
@@ -782,7 +782,7 @@ void LSHMatching<ImType>::showEpilines(ImType &db, ImageContainer &query, Mat F)
 			float db_y1 = (-1 * (eplinesdb[t][2] / eplinesdb[t][1]));
 			float db_y2 = (-1 * (eplinesdb[t][0] / eplinesdb[t][1])*db.imageSize().width) - (eplinesdb[t][2] / eplinesdb[t][1]);
 			Point db_p1(0, db_y1), db_p2(db.imageSize().width, db_y2);
-			line(d, db_p1, db_p2, Scalar(0, 100, 255));
+			line(d, db_p1, db_p2, Scalar(0, 0, 255),2);
 
 			imshow("QueryInliers", q);
 			imshow("DBInliers", d);
