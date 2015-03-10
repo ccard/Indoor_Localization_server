@@ -149,7 +149,7 @@ This is what is expected of the original image db (__Note:__ all '*.txt' files j
 &nbsp;&nbsp;&nbsp;This creates the database of precomputed descriptors for the image db described in the previos section. It is ___recomended___ that this be done because it reduces the db loading time by at least an order of magnitude maybe more. To precompute the descriptors set `OPTION = CREATEDB` in `Localization_CodeRedezine.cpp` and follow the comments in the appropriate if statement to load the image database.  __Note:__ after the new files are created and saved, open `<list output file>` and remove the blank line at the end of the file if this is not done the next steps will result in errors.
 
 ## Build the Basic Map ##
-&nbsp;&nbsp;&nbsp;This creates the basic map between images and their R and T matricies. Using the precomputed descriptor DB (___recomended___) set `OPTION = CREATEMAP` in `Localization_CodeRedezine.cpp` and follow the comments in the appropriate if statement to create the map.
+&nbsp;&nbsp;&nbsp;This creates the basic map between images and their R and T matricies. Using the precomputed descriptor DB (___recomended___) set `OPTION = CREATEMAP` in `Localization_CodeRedezine.cpp` and follow the comments in the appropriate if statement to create the map. Run `connected_graph.rb` to find the largest connected component in the graph.
 
 ## Match Against the database ##
 &nbsp;&nbsp;&nbsp;This creates the database of precomputed descriptors for the image db described in the previos section. Using the precomputed descriptor DB (___recomended___) set `OPTION = MATCH` in `Localization_CodeRedezine.cpp` and follow the comments in the appropriate if statement to match to the database. If it finds a match it will display it.
