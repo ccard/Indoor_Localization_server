@@ -7,6 +7,7 @@ Indoor Localization DB server
  - [Environment](#environment)
  - [Compilation](#compilation)
  - [Program Parts](#program_parts)
+ - [How to run](#how_to_run)
 
 
 ---------------
