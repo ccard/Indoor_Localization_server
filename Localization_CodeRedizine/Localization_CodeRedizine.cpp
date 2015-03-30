@@ -16,6 +16,8 @@
 #include "MapMatching.cpp"
 #include "LSHMatching.h"
 #include "LSHMatching.cpp"
+#include "BOWMatcher.h"
+#include "BOWMatcher.cpp"
 
 #if DEBUG
 const static int VIDEO = 0;
@@ -46,7 +48,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		//Flags for what to run
 		int option = EXAMIN;
 
-		LocalizationManager<MyMat,DBProvider<MyMat>,LSHMatching<MyMat>> manage("Images\\db_images_new_2.txt");
+		LocalizationManager<MyMat,DBProvider<MyMat>,BOWMatcher<MyMat>> manage("Images\\db_images_new_2.txt");
 		DBProvider<MyMat> db;
 		switch(option){
 		case VIDEO:

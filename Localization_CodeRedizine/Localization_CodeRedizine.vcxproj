@@ -163,6 +163,7 @@
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BOWMatcher.h" />
     <ClInclude Include="DBImage.h" />
     <ClInclude Include="DBProvider.h" />
     <ClInclude Include="ImageContainer.h" />
@@ -180,6 +181,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BOWMatcher.cpp" />
     <ClCompile Include="DBImage.cpp" />
     <ClCompile Include="DBProvider.cpp" />
     <ClCompile Include="ImageContainer.cpp" />
