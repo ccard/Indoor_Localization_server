@@ -62,7 +62,7 @@ public:
 		cout << "cluseter end" << endl;
 		//Mat dictU (dictF.rows,dictF.cols,CV_8U);
 		//dictF.convertTo(dictU,CV_8U);
-		bowMatcher.add(dictF);
+		bowMatcher.add(vector<Mat>(1,dictF));
 	}
 
 	int find(ImageContainer& query, ImageProvider<ImType> &db);

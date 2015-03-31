@@ -23,7 +23,10 @@ template <typename ImType>
 bool BOWMatcher<ImType>::knnMatch(ImageContainer &query, ImageProvider<ImType> &db,
 	BOWKNNRes &match, vector<Mat> &masks = vector<Mat>()){
 	vector<vector<DMatch>> m;
-	const Mat des = query.getDescriptor();
+	Mat des1 = query.getDescriptor();
+	Mat desF(des1.rows,des1.cols,CV_32F);
+	des1.convertTo(desF,CV_32F);
+	const Mat des = desF.clone();
 #if DEBUG
 	clock_t start = clock();
 #endif
