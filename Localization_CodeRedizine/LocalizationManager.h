@@ -90,7 +90,7 @@ private:
 		}
 
 		match << db;
-		match.train();
+		match.train(db);
 		return true;
 	}
 

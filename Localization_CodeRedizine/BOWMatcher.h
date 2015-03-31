@@ -39,6 +39,8 @@ public:
 			mParams.compactResults = false;
 			mParams._init = true;//Ensures that these params are defined only once
 		}
+		clusters = 10000;
+		stopThresh = 0.8;
 	};
 	
 
@@ -55,7 +57,7 @@ public:
 		Mat desConvertF(descriptors.rows,descriptors.cols,CV_32F);
 		descriptors.convertTo(desConvertF,CV_32F);
 
-		BOWKMeansTrainer b(10000);
+		BOWKMeansTrainer b(clusters);
 
 		cout << "clustering" << endl;
 		Mat dictF = b.cluster(desConvertF);
@@ -68,13 +70,43 @@ public:
 	int find(ImageContainer& query, ImageProvider<ImType> &db);
 
 	void train(){
-		bowMatcher.train();	
+		bowMatcher.train();
+	}
+
+	void train(ImageProvider<ImType>& images){
+		train();
+		map<size_t, vector<size_t>> tmp_wordmap;
+		size_t db_size = images.getImages().size();
+		for (int t = 0; t < clusters; ++t){
+			tmp_wordmap.insert(make_pair(t, vector<size_t>()));
+		}
+		vector<DMatch> matches;
+		for (size_t i = 0; i < db_size; ++i){
+			Mat dbf(images[i].getDescriptor().rows, images[i].getDescriptor().cols, CV_32F);
+			images[i].getDescriptor().convertTo(dbf, CV_32F);
+			bowMatcher.match(dbf, matches);
+			for (vector<DMatch>::iterator j = matches.begin(); j != matches.end(); ++j){
+				tmp_wordmap[j->trainIdx].push_back(i);
+			}
+			matches.clear();
+		}
+		for (map<size_t, vector<size_t>>::iterator i = tmp_wordmap.begin(); i != tmp_wordmap.end(); ++i){
+			if ((i->second.size() / ((double)db_size)) < stopThresh){
+				wordmap.insert(*i);
+			}
+			else {
+				wordmap.insert(make_pair(i->first, vector<size_t>()));
+			}
+		}
 	}
 
 private:
 	FlannBasedMatcher bowMatcher;
 	size_t lastIndex;
+	int clusters;
+	double stopThresh;
 	map<size_t,size_t> index_dbindex;
+	map<size_t, vector<size_t>> wordmap;
 
 	/**
 	* This method performs a k nearest neighbor mathing agianst the 

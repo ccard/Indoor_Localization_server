@@ -22,20 +22,65 @@ int BOWMatcher<ImType>::find(ImageContainer& query, ImageProvider<ImType> &db){
 template <typename ImType>
 bool BOWMatcher<ImType>::knnMatch(ImageContainer &query, ImageProvider<ImType> &db,
 	BOWKNNRes &match, vector<Mat> &masks = vector<Mat>()){
-	vector<vector<DMatch>> m;
+	//vector<vector<DMatch>> m;
 	Mat des1 = query.getDescriptor();
 	Mat desF(des1.rows,des1.cols,CV_32F);
 	des1.convertTo(desF,CV_32F);
 	const Mat des = desF.clone();
+	
 #if DEBUG
 	clock_t start = clock();
 #endif
-	bowMatcher.knnMatch(des, m, mParams.k);
+	//bowMatcher.knnMatch(des, m, mParams.k);
+	vector<DMatch> m;
+	bowMatcher.match(des, m);
+	map<size_t, int> counter;
+	for (vector<DMatch>::iterator i = m.begin(); i != m.end(); ++i){
+		for (vector<size_t>::iterator j = wordmap[i->trainIdx].begin(); j != wordmap[i->trainIdx].end(); ++j){
+			if (counter.find(*j) != counter.end()){
+				counter[*j] += 1;
+			}
+			else{
+				counter.insert(make_pair(*j, 1));
+			}
+		}
+	}
+
+	int secondmost = 0, firstmost = 0;
+	for (map<size_t, int>::iterator i = counter.begin(); i != counter.end(); ++i){
+		if (i->second > firstmost){
+			secondmost = firstmost;
+			firstmost = i->second;
+		}
+		else if (i->second > secondmost){
+			secondmost = i->second;
+		}
+	}
+	secondmost *= 0.8;
+	map<int, ImType> images;
+	for (map<size_t, int>::iterator i = counter.begin(); i != counter.end(); ++i){
+		if (i->second > secondmost){
+			images.insert(make_pair(i->first, db[i->first]));
+		}
+	}
+	BFMatcher tempm(NORM_HAMMING2, mParams.compactResults);
+
+	map<int, vector<vector<DMatch>>> tmpDMatch;
+
+	for (map<int, ImType>::iterator i = images.begin(); i != images.end(); ++i){
+		vector<vector<DMatch>> received;
+		tempm.knnMatch(query.getDescriptor(), i->second.getDescriptor(), received, mParams.k);
+
+		tmpDMatch.insert(make_pair(i->first, received));
+	}
+
+	match = convertDMatch(tmpDMatch, images, query);
+
 #if DEBUG
 	cout << "LSH Matching time for k=" << mParams.k << ", is " << ((float)(clock() - start)) / CLOCKS_PER_SEC << " sec" << endl;
 #endif
 	//Converts DMatch to MyDMatch
-	match = convertDMatch(m, db, query);
+	//match = convertDMatch(m, db, query);
 	return match.size() > 0;
 }
 

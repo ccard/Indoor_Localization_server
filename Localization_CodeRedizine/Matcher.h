@@ -62,5 +62,7 @@ public:
 	 * Trains the database
 	 */
 	virtual void train() = 0;
+
+	virtual void train(ImageProvider<ImType> &db) = 0;
 };
 

@@ -64,6 +64,10 @@ public:
 		lshMatcher.train();	
 	}
 
+	void train(ImageProvider<ImType> &db){
+		train();
+	}
+
 private:
 	FlannBasedMatcher lshMatcher;
 	size_t lastIndex;
