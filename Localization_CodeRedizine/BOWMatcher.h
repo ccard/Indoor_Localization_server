@@ -76,19 +76,42 @@ public:
 	void train(ImageProvider<ImType>& images){
 		train();
 		map<size_t, vector<size_t>> tmp_wordmap;
+		map<size_t,int> defaultWord;
 		size_t db_size = images.getImages().size();
 		for (int t = 0; t < clusters; ++t){
 			tmp_wordmap.insert(make_pair(t, vector<size_t>()));
+			defaultWord.insert(make_pair(t,0));
+			wordFreq.insert(make_pair(t,0));
 		}
 		vector<DMatch> matches;
+		map<size_t,map<size_t,int>> tmp_idf;
+		map<size_t,int> docWordCount;
 		for (size_t i = 0; i < db_size; ++i){
 			Mat dbf(images[i].getDescriptor().rows, images[i].getDescriptor().cols, CV_32F);
 			images[i].getDescriptor().convertTo(dbf, CV_32F);
 			bowMatcher.match(dbf, matches);
+			tmp_idf.insert(make_pair(i,defaultWord));
+			docWordCount.insert(make_pair(i,0));
 			for (vector<DMatch>::iterator j = matches.begin(); j != matches.end(); ++j){
 				tmp_wordmap[j->trainIdx].push_back(i);
+				tmp_idf[i][j->trainIdx] += 1;
+				docWordCount[i] += 1;
+				wordFreq[j->trainIdx] += 1;
 			}
 			matches.clear();
+		}
+		for (map<size_t, map<size_t,int>>::iterator i = tmp_idf.begin();
+			i != tmp_idf.end(); ++i){
+				double n_d = docWordCount[i->first];
+				double N = clusters;
+				Mat v(N,1,CV_64F);
+				for(map<size_t,int>::iterator j = i->second.begin(); j != i->second.end(); ++j){
+					double N_i = wordFreq[j->first];
+					double n_id = j->second;
+					double t = (n_id/n_d)*log(N/N_i);
+					v.at<double>(j->first,0) = t;
+				}
+				tf_idf.insert(make_pair(i->first,v));
 		}
 		for (map<size_t, vector<size_t>>::iterator i = tmp_wordmap.begin(); i != tmp_wordmap.end(); ++i){
 			if ((i->second.size() / ((double)db_size)) < stopThresh){
@@ -107,6 +130,10 @@ private:
 	double stopThresh;
 	map<size_t,size_t> index_dbindex;
 	map<size_t, vector<size_t>> wordmap;
+	map<size_t, double> wordFreq;
+	map<size_t, Mat> tf_idf;
+
+	double sim(Mat &v_q, Mat &v_d);
 
 	/**
 	* This method performs a k nearest neighbor mathing agianst the 

@@ -65,7 +65,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			break;
 		case EXAMIN:
-			manage.evaluateMatches("Images\\new_3rd_floor_brown\\3rd_flloor_brown_new_6961.JPG");
+			manage.evaluateMatches("Images\\local_map_test_set\\local_map_test_image_0014.JPG");
 			break;
 		default:
 			cerr << "Incorrect options" << endl;

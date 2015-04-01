@@ -20,6 +20,20 @@ int BOWMatcher<ImType>::find(ImageContainer& query, ImageProvider<ImType> &db){
 }
 
 template <typename ImType>
+double BOWMatcher<ImType>::sim(Mat &v_q, Mat &v_d){
+	Mat v_ql = v_q.t()*v_q;
+	Mat v_dl = v_d.t()*v_d;
+	Mat v_l = v_q.t()*v_d;
+	double v = v_l.at<double>(0,0);
+	double norm_q = v_ql.at<double>(0,0);
+	double norm_d = v_dl.at<double>(0,0);
+	norm_q = sqrt(norm_q);
+	norm_d = sqrt(norm_d);
+	double dist  = v/(norm_q*norm_d);
+	return dist;
+}
+
+template <typename ImType>
 bool BOWMatcher<ImType>::knnMatch(ImageContainer &query, ImageProvider<ImType> &db,
 	BOWKNNRes &match, vector<Mat> &masks = vector<Mat>()){
 	//vector<vector<DMatch>> m;
@@ -34,8 +48,12 @@ bool BOWMatcher<ImType>::knnMatch(ImageContainer &query, ImageProvider<ImType> &
 	//bowMatcher.knnMatch(des, m, mParams.k);
 	vector<DMatch> m;
 	bowMatcher.match(des, m);
-	map<size_t, int> counter;
-	for (vector<DMatch>::iterator i = m.begin(); i != m.end(); ++i){
+	map<size_t, double> sims;
+	map<size_t, int> qFreq;
+	for(size_t i =0; i < clusters; ++i){
+		qFreq.insert(make_pair(i,0));
+	}
+	/*for (vector<DMatch>::iterator i = m.begin(); i != m.end(); ++i){
 		for (vector<size_t>::iterator j = wordmap[i->trainIdx].begin(); j != wordmap[i->trainIdx].end(); ++j){
 			if (counter.find(*j) != counter.end()){
 				counter[*j] += 1;
@@ -44,9 +62,42 @@ bool BOWMatcher<ImType>::knnMatch(ImageContainer &query, ImageProvider<ImType> &
 				counter.insert(make_pair(*j, 1));
 			}
 		}
+	}*/
+	double n_d = 0;
+	for (vector<DMatch>::iterator i = m.begin(); i != m.end(); ++i){
+		qFreq[i->trainIdx] += 1;
+		++n_d;
 	}
 
-	int secondmost = 0, firstmost = 0;
+	double N = clusters;
+	Mat v_q (N,1,CV_64F); 
+	for (map<size_t, int>::iterator i = qFreq.begin(); i != qFreq.end(); ++i){
+		double n_id = i->second;
+		double N_i = wordFreq[i->first];
+		double t = (n_id/n_d)*log(N/N_i);
+		v_q.at<double>(i->first,0) = t;
+	}
+
+	double secondmost = 0, firstmost = 0;
+	for(map<size_t, Mat>::iterator i = tf_idf.begin(); i != tf_idf.end(); ++i){
+		double s = sim(v_q,i->second);
+		if(s > firstmost){
+			secondmost = firstmost;
+			firstmost = s;
+		} else if (s > secondmost){
+			secondmost = s;
+		}
+		sims.insert(make_pair(i->first,s));
+	}
+
+	map<int, ImType> images;
+	for(map<size_t, double>::iterator i = sims.begin(); i != sims.end(); ++i){
+		if (i->second >= secondmost){
+			images.insert(make_pair(i->first,db[i->first]));
+		}
+	}
+
+	/*int secondmost = 0, firstmost = 0;
 	for (map<size_t, int>::iterator i = counter.begin(); i != counter.end(); ++i){
 		if (i->second > firstmost){
 			secondmost = firstmost;
@@ -62,7 +113,7 @@ bool BOWMatcher<ImType>::knnMatch(ImageContainer &query, ImageProvider<ImType> &
 		if (i->second > secondmost){
 			images.insert(make_pair(i->first, db[i->first]));
 		}
-	}
+	}*/
 	BFMatcher tempm(NORM_HAMMING2, mParams.compactResults);
 
 	map<int, vector<vector<DMatch>>> tmpDMatch;
