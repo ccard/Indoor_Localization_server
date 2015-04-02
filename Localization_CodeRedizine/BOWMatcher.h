@@ -46,22 +46,32 @@ public:
 
 	void operator<< (ImageProvider<ImType>& images){
 		vector<ImType> imgs = images.getImages();
-		Mat descriptors;
+		Mat descriptors,dictF;
+		if (false){
+			for (size_t i = 0; i < imgs.size(); i+=2){
+				descriptors.push_back(imgs[i].getDescriptor());
+				index_dbindex.insert(make_pair(lastIndex, imgs[i].getIndex()));
+				++lastIndex;
+			}
+			cout << "num rows: " << descriptors.rows << endl;
 
-		for(vector<ImType>::iterator i = imgs.begin(); i != imgs.end(); ++i){
-			descriptors.push_back(i->getDescriptor());
-			index_dbindex.insert(make_pair(lastIndex,i->getIndex()));
-			++lastIndex;
+			Mat desConvertF(descriptors.rows, descriptors.cols, CV_32F);
+			descriptors.convertTo(desConvertF, CV_32F);
+
+			BOWKMeansTrainer b(clusters);
+
+			cout << "clustering" << endl;
+			dictF = b.cluster(desConvertF);
+			cout << "cluseter end" << endl;
+			FileStorage fs("vocabulary_full.xml", FileStorage::WRITE);//vocabulary_small.xml
+			fs << "vocab" << dictF;
+			fs.release();
 		}
-
-		Mat desConvertF(descriptors.rows,descriptors.cols,CV_32F);
-		descriptors.convertTo(desConvertF,CV_32F);
-
-		BOWKMeansTrainer b(clusters);
-
-		cout << "clustering" << endl;
-		Mat dictF = b.cluster(desConvertF);
-		cout << "cluseter end" << endl;
+		else {
+			FileStorage fs("vocabulary_full.xml", FileStorage::READ);//vocabulary_small.xml
+			fs["vocab"] >> dictF;
+			fs.release();
+		}
 		//Mat dictU (dictF.rows,dictF.cols,CV_8U);
 		//dictF.convertTo(dictU,CV_8U);
 		bowMatcher.add(vector<Mat>(1,dictF));

@@ -48,7 +48,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		//Flags for what to run
 		int option = EXAMIN;
 
-		LocalizationManager<MyMat,DBProvider<MyMat>,BOWMatcher<MyMat>> manage("Images\\local_map.txt");
+		LocalizationManager<MyMat,DBProvider<MyMat>,BOWMatcher<MyMat>> manage("Images\\db_images_new.txt");
 		DBProvider<MyMat> db;
 		switch(option){
 		case VIDEO:
