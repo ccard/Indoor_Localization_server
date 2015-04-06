@@ -86,7 +86,7 @@ void LocalizationManager<ImgType, ImgProviderType, ImgMatcherType>::performSubsa
 		createTestingSet(testSets[i], testSet, ndb);
 		ImgMatcherType nmatch;
 		nmatch << ndb;
-		nmatch.train();
+		nmatch.train(ndb);
 
 		for (vector<ImgType>::iterator j = testSet.begin(); j != testSet.end(); ++j){
 			start = clock();

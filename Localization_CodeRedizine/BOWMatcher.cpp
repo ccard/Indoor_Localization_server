@@ -48,21 +48,18 @@ bool BOWMatcher<ImType>::knnMatch(ImageContainer &query, ImageProvider<ImType> &
 	//bowMatcher.knnMatch(des, m, mParams.k);
 	vector<DMatch> m;
 	bowMatcher.match(des, m);
-	map<size_t, double> sims;
+	struct srt{
+		bool operator()(const pair<size_t,double> &r, const pair<size_t,double> &l){
+			return r.second > l.second;
+		}
+	} sorter;
+	vector<pair<size_t, double>> sims;
+	
 	map<size_t, int> qFreq;
 	for(size_t i =0; i < clusters; ++i){
 		qFreq.insert(make_pair(i,0));
 	}
-	/*for (vector<DMatch>::iterator i = m.begin(); i != m.end(); ++i){
-		for (vector<size_t>::iterator j = wordmap[i->trainIdx].begin(); j != wordmap[i->trainIdx].end(); ++j){
-			if (counter.find(*j) != counter.end()){
-				counter[*j] += 1;
-			}
-			else{
-				counter.insert(make_pair(*j, 1));
-			}
-		}
-	}*/
+	
 	double n_d = 0;
 	for (vector<DMatch>::iterator i = m.begin(); i != m.end(); ++i){
 		qFreq[i->trainIdx] += 1;
@@ -87,33 +84,19 @@ bool BOWMatcher<ImType>::knnMatch(ImageContainer &query, ImageProvider<ImType> &
 		} else if (s > secondmost){
 			secondmost = s;
 		}
-		sims.insert(make_pair(i->first,s));
+		sims.push_back(make_pair(i->first,s));
 	}
+	sort(sims.begin(),sims.end(),sorter);
 
+	int n = 10, c = 0;;
 	map<int, ImType> images;
-	for(map<size_t, double>::iterator i = sims.begin(); i != sims.end(); ++i){
-		if (i->second >= secondmost){
+	for(vector<pair<size_t, double>>::iterator i = sims.begin(); i != sims.end(); ++i){
+		if (c < n){
 			images.insert(make_pair(i->first,db[i->first]));
+			++c;
 		}
 	}
 
-	/*int secondmost = 0, firstmost = 0;
-	for (map<size_t, int>::iterator i = counter.begin(); i != counter.end(); ++i){
-		if (i->second > firstmost){
-			secondmost = firstmost;
-			firstmost = i->second;
-		}
-		else if (i->second > secondmost){
-			secondmost = i->second;
-		}
-	}
-	secondmost *= 0.8;
-	map<int, ImType> images;
-	for (map<size_t, int>::iterator i = counter.begin(); i != counter.end(); ++i){
-		if (i->second > secondmost){
-			images.insert(make_pair(i->first, db[i->first]));
-		}
-	}*/
 	BFMatcher tempm(NORM_HAMMING2, mParams.compactResults);
 
 	map<int, vector<vector<DMatch>>> tmpDMatch;

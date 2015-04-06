@@ -46,7 +46,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		mb.buildMap("Test_map_fix");
 	} else {
 		//Flags for what to run
-		int option = EXAMIN;
+		int option = SUBSAMPLE;
 
 		LocalizationManager<MyMat,DBProvider<MyMat>,BOWMatcher<MyMat>> manage("Images\\db_images_new.txt");
 		DBProvider<MyMat> db;
@@ -55,7 +55,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			manage.performVideoTesting("Images\\3rd_floor_brown_se_stair.mp4","Images\\VideoTestResults.csv",100,true,15,28000);
 			break;
 		case SUBSAMPLE:
-			manage.performSubsample("full_db_fix_test_1.csv");
+			manage.performSubsample("bow_test2_4.csv");
 			break;
 		case VIEWSTATS:
 			break;
