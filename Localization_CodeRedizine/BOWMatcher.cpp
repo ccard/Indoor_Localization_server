@@ -82,6 +82,12 @@ bool BOWMatcher<ImType>::knnMatch(ImageContainer &query, ImageProvider<ImType> &
 	double secondmost = 0, firstmost = 0;
 	for(map<size_t, Mat>::iterator i = tf_idf.begin(); i != tf_idf.end(); ++i){
 		double s = sim(v_q,i->second);
+#if INSPECT
+		cout << "Image: " << i->first << ", similarity: " << s << endl;
+		if (i->first % 30 == 0){
+			system("PAUSE");
+		}
+#endif
 		if(s > firstmost){
 			secondmost = firstmost;
 			firstmost = s;

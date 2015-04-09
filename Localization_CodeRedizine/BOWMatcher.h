@@ -140,6 +140,9 @@ public:
 		for (map<size_t, double>::iterator i = wordFreq.begin(); i != wordFreq.end(); ++i){
 			if (i->first % 2){
 				cout << ", word: " << i->first << " -> count: " << i->second << endl;
+				if (i->first % 500 == 0) {
+					system("PAUSE");
+				}
 			} else {
 				cout << "word: " << i->first << " -> count: " << i->second;
 			}
