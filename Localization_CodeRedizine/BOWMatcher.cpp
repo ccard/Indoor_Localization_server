@@ -75,6 +75,10 @@ bool BOWMatcher<ImType>::knnMatch(ImageContainer &query, ImageProvider<ImType> &
 		v_q.at<double>(i->first,0) = t;
 	}
 
+#if INSPECT
+	cout << "tf-idf of q: " << v_q << endl;
+#endif
+
 	double secondmost = 0, firstmost = 0;
 	for(map<size_t, Mat>::iterator i = tf_idf.begin(); i != tf_idf.end(); ++i){
 		double s = sim(v_q,i->second);
@@ -111,7 +115,7 @@ bool BOWMatcher<ImType>::knnMatch(ImageContainer &query, ImageProvider<ImType> &
 	match = convertDMatch(tmpDMatch, images, query);
 
 #if DEBUG
-	cout << "LSH Matching time for k=" << mParams.k << ", is " << ((float)(clock() - start)) / CLOCKS_PER_SEC << " sec" << endl;
+	cout << "BOW Matching time for k=" << mParams.k << ", is " << ((float)(clock() - start)) / CLOCKS_PER_SEC << " sec" << endl;
 #endif
 	//Converts DMatch to MyDMatch
 	//match = convertDMatch(m, db, query);
@@ -470,9 +474,11 @@ int BOWMatcher<ImType>::verify(BOWImgMatches &matches, ImageProvider<ImType> &db
 		i != fundamentals.end(); ++i){
 		vector <MyDMatch> tmp;
 		int mean = sumInliers(matches[i->first], i->second.second, tmp);
-
-		if (best_fit < mean){
+		if (tmp.size() > 0){
 			showMatches(db[i->first], query, tmp, i->second.first);
+		}
+		if (best_fit < mean){
+			
 			inspectEpipole(db[i->first], query, tmp, i->second.first);
 			second_best = best_fit;
 			best_fit = mean;

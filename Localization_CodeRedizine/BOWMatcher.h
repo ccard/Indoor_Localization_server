@@ -131,6 +131,21 @@ public:
 				wordmap.insert(make_pair(i->first, vector<size_t>()));
 			}
 		}
+		tmp_idf.clear();
+		defaultWord.clear();
+		tmp_wordmap.clear();
+		docWordCount.clear();
+#if INSPECT
+		cout << "Word Frequencies" << endl;
+		for (map<size_t, double>::iterator i = wordFreq.begin(); i != wordFreq.end(); ++i){
+			if (i->first % 2){
+				cout << ", word: " << i->first << " -> count: " << i->second << endl;
+			} else {
+				cout << "word: " << i->first << " -> count: " << i->second;
+			}
+			
+		}
+#endif
 	}
 
 private:
