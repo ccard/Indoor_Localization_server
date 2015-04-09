@@ -110,11 +110,25 @@ bool BOWMatcher<ImType>::knnMatch(ImageContainer &query, ImageProvider<ImType> &
 	BFMatcher tempm(NORM_HAMMING2, mParams.compactResults);
 
 	map<int, vector<vector<DMatch>>> tmpDMatch;
+#if INSPECT
+	cvNamedWindow("matches", CV_WINDOW_KEEPRATIO);
+	Mat tmp_db, temp_q, temp_R;
+#endif
 
 	for (map<int, ImType>::iterator i = images.begin(); i != images.end(); ++i){
 		vector<vector<DMatch>> received;
 		tempm.knnMatch(query.getDescriptor(), i->second.getDescriptor(), received, mParams.k);
-
+#if INSPECT
+		if (db[i->first].loadImage()){
+			db[i->first].getMat(tmp_db);
+			query.getMat(temp_q);
+			drawMatches(temp_q, query.getKeyPoints(), tmp_db, db[i->first].getKeyPoints(), received, temp_R);
+			waitKey();
+			tmp_db.release();
+			temp_q.release();
+			temp_R.release();
+		}
+#endif
 		tmpDMatch.insert(make_pair(i->first, received));
 	}
 
