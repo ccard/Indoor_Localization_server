@@ -123,6 +123,7 @@ bool BOWMatcher<ImType>::knnMatch(ImageContainer &query, ImageProvider<ImType> &
 			db[i->first].getMat(tmp_db);
 			query.getMat(temp_q);
 			drawMatches(temp_q, query.getKeyPoints(), tmp_db, db[i->first].getKeyPoints(), received, temp_R);
+			imshow("matches",temp_R);
 			waitKey();
 			tmp_db.release();
 			temp_q.release();
@@ -528,7 +529,7 @@ int BOWMatcher<ImType>::verify(BOWImgMatches &matches, ImageProvider<ImType> &db
 
 #if INSPECT
 	if(img >= 0){
-		showEpilines(db[img],query,fundamentals[img].first);
+		//showEpilines(db[img],query,fundamentals[img].first);
 	}
 #endif
 	if (best_fit >= mParams.inlierThresh){
@@ -566,7 +567,7 @@ int BOWMatcher<ImType>::verify(BOWImgMatches &matches, ImageProvider<ImType> &db
 		}
 	}
 	if(img >= 0){
-		showEpilines(db[img],query,fundimentals[img].first);
+		//showEpilines(db[img],query,fundimentals[img].first);
 	}
 #else
 	//Find the image with the best number of inliers
