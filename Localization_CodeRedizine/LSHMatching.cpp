@@ -418,7 +418,7 @@ int LSHMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 
 #if INSPECT
 	if(img >= 0){
-		showEpilines(db[img],query,fundamentals[img].first);
+		//showEpilines(db[img],query,fundamentals[img].first);
 	}
 #endif
 	if (best_fit >= mParams.inlierThresh){
@@ -456,7 +456,7 @@ int LSHMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 		}
 	}
 	if(img >= 0){
-		showEpilines(db[img],query,fundimentals[img].first);
+		//showEpilines(db[img],query,fundimentals[img].first);
 	}
 #else
 	//Find the image with the best number of inliers

@@ -48,7 +48,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		//Flags for what to run
 		int option = EXAMIN;
 
-		LocalizationManager<MyMat,DBProvider<MyMat>,BOWMatcher<MyMat>> manage("Images\\db_images_new_2.txt");
+		LocalizationManager<MyMat,DBProvider<MyMat>,LSHMatching<MyMat>> manage("Images\\db_images_new_2.txt");
 		DBProvider<MyMat> db;
 		switch(option){
 		case VIDEO:
@@ -65,7 +65,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 			break;
 		case EXAMIN:
-			manage.evaluateMatches("Images\\new_2nd_floor_brown\\2nd_floor_brown_new_7320.JPG");
+			manage.evaluateMatches("Images\\new_2nd_floor_brown\\2nd_floor_brown_new_7308.JPG");
 			break;
 		default:
 			cerr << "Incorrect options" << endl;
