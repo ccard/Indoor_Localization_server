@@ -155,3 +155,6 @@ FakesAssemblies/
 Images/
 *.csv
 Test*.txt
+
+# linux
+bin/*
