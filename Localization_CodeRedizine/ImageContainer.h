@@ -13,12 +13,11 @@
  *  and the keypoints from any class implementing this interface
  */
 
-#include "opencv2\core\core.hpp"
-#include "opencv2\highgui\highgui.hpp"
-#include "opencv2\features2d\features2d.hpp"
-#include "opencv2\nonfree\features2d.hpp"
-#include "opencv2\calib3d\calib3d.hpp"
-#include "ParamClass.h"
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/features2d/features2d.hpp"
+#include "opencv2/nonfree/features2d.hpp"
+#include "opencv2/calib3d/calib3d.hpp"
 
 //Defines orbparams object
 #ifndef _ORBPARAMS

@@ -7,13 +7,13 @@
  * class however it is best used in conjunction with the LocalizationManager class as the LocalizationManager
  * abstracts some of the set up process and stores the the database and matcher in memory so that it can be used repetedly
  */
-#include "opencv2\core\core.hpp"
-#include "opencv2\highgui\highgui.hpp"
-#include "opencv2\features2d\features2d.hpp"
-#include "opencv2\nonfree\features2d.hpp"
-#include "opencv2\calib3d\calib3d.hpp"
-#include "opencv2\flann\flann.hpp"
-#include "opencv2\objdetect\objdetect.hpp"
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/features2d/features2d.hpp"
+#include "opencv2/nonfree/features2d.hpp"
+#include "opencv2/calib3d/calib3d.hpp"
+#include "opencv2/flann/flann.hpp"
+#include "opencv2/objdetect/objdetect.hpp"
 #include "ImageProvider.h"
 #include "ImageContainer.h"
 #include <type_traits>
