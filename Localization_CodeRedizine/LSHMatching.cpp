@@ -1,27 +1,33 @@
 #include "LSHMatching.h"
 
 template <typename ImType>
-int LSHMatching<ImType>::find(ImageContainer& query, ImageProvider<ImType> &db){
+int LSHMatching<ImType>::find(ImageContainer &_queryImage, ImageProvider<ImType> &_db)
+{
 	KNNRes matches;
-	if (knnMatch(query, db, matches)) {
+	if (knnMatch(_queryImage, _db, matches)) 
+	{
 		FilteredRes filteredImgs = filterMatchingImages(matches);
-		if (filteredImgs.first){
-			return verify(filteredImgs.second, db, query);
+		if (filteredImgs.first)
+		{
+			return verify(filteredImgs.second, _db, _queryImage);
 		}
-		else {
+		else 
+		{
 			return ERROR;
 		}
 	}
-	else {
+	else 
+	{
 		return ERROR;
 	}
 }
 
 template <typename ImType>
-bool LSHMatching<ImType>::knnMatch(ImageContainer &query, ImageProvider<ImType> &db,
-	KNNRes &match, vector<Mat> &masks = vector<Mat>()){
+bool LSHMatching<ImType>::knnMatch(ImageContainer &_queryImage, ImageProvider<ImType> &_db,
+	KNNRes &_match, vector<Mat> &_masks = vector<Mat>())
+{
 	vector<vector<DMatch>> m;
-	const Mat des = query.getDescriptor();
+	const Mat des = _queryImage.getDescriptor();
 #if DEBUG
 	clock_t start = clock();
 #endif
@@ -30,37 +36,44 @@ bool LSHMatching<ImType>::knnMatch(ImageContainer &query, ImageProvider<ImType> 
 	cout << "LSH Matching time for k=" << mParams.k << ", is " << ((float)(clock() - start)) / CLOCKS_PER_SEC << " sec" << endl;
 #endif
 	//Converts DMatch to MyDMatch
-	match = convertDMatch(m, db, query);
-	return match.size() > 0;
+	_match = convertDMatch(m, _db, _queryImage);
+	return _match.size() > 0;
 }
 
 
 template <typename ImType>
-KNNRes LSHMatching<ImType>::convertDMatch(vector<vector<DMatch>> matches,
-	ImageProvider<ImType> &db, ImageContainer &query){
+KNNRes LSHMatching<ImType>::convertDMatch(vector<vector<DMatch>> _matches,
+	ImageProvider<ImType> &_db, ImageContainer &_queryImage)
+{
 	KNNRes newMatches;
 
-	for (vector<vector<DMatch>>::iterator i = matches.begin();
-		i != matches.end(); ++i){
-		for (vector<DMatch>::iterator j = (*i).begin();
-			j != (*i).end(); ++j){
-			MyDMatch t(*j);
-			t.train_kp = db[j->imgIdx].getKeyPoint(j->trainIdx);
-			t.query_kp = query.getKeyPoint(j->queryIdx);
-			if (newMatches.find(t.imgIdx) != newMatches.end()){
-				if (newMatches[t.imgIdx].find(t.queryIdx) != newMatches[t.imgIdx].end()){
-					newMatches[t.imgIdx][t.queryIdx].push_back(t);
+	for (vector<vector<DMatch>>::iterator imagesMatchList = _matches.begin();
+		imagesMatchList != _matches.end(); ++imagesMatchList)
+	{
+		for (vector<DMatch>::iterator imageMatchList = (*imagesMatchList).begin();
+			imageMatchList != (*imagesMatchList).end(); ++imageMatchList)
+		{
+			MyDMatch match(*imageMatchList);
+			match.train_kp = _db[imageMatchList->imgIdx].getKeyPoint(imageMatchList->trainIdx);
+			match.query_kp = _queryImage.getKeyPoint(imageMatchList->queryIdx);
+			if (newMatches.find(match.imgIdx) != newMatches.end())
+			{
+				if (newMatches[match.imgIdx].find(match.queryIdx) != newMatches[match.imgIdx].end())
+				{
+					newMatches[match.imgIdx][match.queryIdx].push_back(match);
 				}
-				else {
-					newMatches[t.imgIdx].insert(pair<int, vector<MyDMatch>>(t.queryIdx, vector<MyDMatch>()));
-					newMatches[t.imgIdx][t.queryIdx].push_back(t);
+				else 
+				{
+					newMatches[match.imgIdx].insert(pair<int, vector<MyDMatch>>(match.queryIdx, vector<MyDMatch>()));
+					newMatches[match.imgIdx][match.queryIdx].push_back(match);
 				}
 			}
-			else {
+			else 
+			{
 				map<int, vector<MyDMatch>> tmp;
-				tmp.insert(pair<int, vector<MyDMatch>>(t.queryIdx, vector<MyDMatch>()));
-				newMatches.insert(pair<int, map<int, vector<MyDMatch>>>(t.imgIdx, tmp));
-				newMatches[t.imgIdx][t.queryIdx].push_back(t);
+				tmp.insert(pair<int, vector<MyDMatch>>(match.queryIdx, vector<MyDMatch>()));
+				newMatches.insert(pair<int, map<int, vector<MyDMatch>>>(match.imgIdx, tmp));
+				newMatches[match.imgIdx][match.queryIdx].push_back(match);
 			}
 		}
 	}
@@ -69,33 +82,40 @@ KNNRes LSHMatching<ImType>::convertDMatch(vector<vector<DMatch>> matches,
 }
 
 template <typename ImType>
-KNNRes LSHMatching<ImType>::convertDMatch(vector<vector<DMatch>> matches,
-	map<int, ImType> &db, map<int, int> tmpdb_to_db, ImageContainer &query){
+KNNRes LSHMatching<ImType>::convertDMatch(vector<vector<DMatch>> _matches,
+	map<int, ImType> &_db, map<int, int> tmpdb_to_db, ImageContainer &_queryImage)
+{
 	KNNRes newMatches;
 
-	for (vector<vector<DMatch>>::iterator i = matches.begin();
-		i != matches.end(); ++i){
-		for (vector<DMatch>::iterator j = (*i).begin();
-			j != (*i).end(); ++j){
-			DMatch m = *j;
-			m.imgIdx = tmpdb_to_db[j->imgIdx];
-			MyDMatch t(m);
-			t.train_kp = db[t.imgIdx].getKeyPoint(j->trainIdx);
-			t.query_kp = query.getKeyPoint(j->queryIdx);
-			if (newMatches.find(t.imgIdx) != newMatches.end()){
-				if (newMatches[t.imgIdx].find(t.queryIdx) != newMatches[t.imgIdx].end()){
-					newMatches[t.imgIdx][t.queryIdx].push_back(t);
+	for (vector<vector<DMatch>>::iterator imagesMatchList = _matches.begin();
+		imagesMatchList != _matches.end(); ++imagesMatchList)
+	{
+		for (vector<DMatch>::iterator imageMatchList = (*imagesMatchList).begin();
+			imageMatchList != (*imagesMatchList).end(); ++imageMatchList)
+		{
+			DMatch dMatch = *imageMatchList;
+			dMatch.imgIdx = tmpdb_to_db[imageMatchList->imgIdx];
+			MyDMatch match(dMatch);
+			match.train_kp = _db[match.imgIdx].getKeyPoint(imageMatchList->trainIdx);
+			match.query_kp = _queryImage.getKeyPoint(imageMatchList->queryIdx);
+			if (newMatches.find(match.imgIdx) != newMatches.end())
+			{
+				if (newMatches[match.imgIdx].find(match.queryIdx) != newMatches[match.imgIdx].end())
+				{
+					newMatches[match.imgIdx][match.queryIdx].push_back(match);
 				}
-				else {
-					newMatches[t.imgIdx].insert(pair<int, vector<MyDMatch>>(t.queryIdx, vector<MyDMatch>()));
-					newMatches[t.imgIdx][t.queryIdx].push_back(t);
+				else 
+				{
+					newMatches[match.imgIdx].insert(pair<int, vector<MyDMatch>>(match.queryIdx, vector<MyDMatch>()));
+					newMatches[match.imgIdx][match.queryIdx].push_back(match);
 				}
 			}
-			else {
+			else 
+			{
 				map<int, vector<MyDMatch>> tmp;
-				tmp.insert(pair<int, vector<MyDMatch>>(t.queryIdx, vector<MyDMatch>()));
-				newMatches.insert(pair<int, map<int, vector<MyDMatch>>>(t.imgIdx, tmp));
-				newMatches[t.imgIdx][t.queryIdx].push_back(t);
+				tmp.insert(pair<int, vector<MyDMatch>>(match.queryIdx, vector<MyDMatch>()));
+				newMatches.insert(pair<int, map<int, vector<MyDMatch>>>(match.imgIdx, tmp));
+				newMatches[match.imgIdx][match.queryIdx].push_back(match);
 			}
 		}
 	}
@@ -104,34 +124,41 @@ KNNRes LSHMatching<ImType>::convertDMatch(vector<vector<DMatch>> matches,
 }
 
 template <typename ImType>
-KNNRes LSHMatching<ImType>::convertDMatch(map<int, vector<vector<DMatch>>> &matches,
-	map<int, ImType> &db, ImageContainer &query){
+KNNRes LSHMatching<ImType>::convertDMatch(map<int, vector<vector<DMatch>>> &_matches,
+	map<int, ImType> &_db, ImageContainer &_queryImage){
 	KNNRes newMatches;
 
-	for (map<int, vector<vector<DMatch>>>::iterator beg = matches.begin(); beg != matches.end(); ++beg){
-		for (vector<vector<DMatch>>::iterator i = beg->second.begin();
-			i != beg->second.end(); ++i){
-			for (vector<DMatch>::iterator j = (*i).begin();
-				j != (*i).end(); ++j){
-				DMatch m = *j;
-				m.imgIdx = beg->first;
-				MyDMatch t(m);
-				t.train_kp = db[t.imgIdx].getKeyPoint(j->trainIdx);
-				t.query_kp = query.getKeyPoint(j->queryIdx);
-				if (newMatches.find(t.imgIdx) != newMatches.end()){
-					if (newMatches[t.imgIdx].find(t.queryIdx) != newMatches[t.imgIdx].end()){
-						newMatches[t.imgIdx][t.queryIdx].push_back(t);
+	for (map<int, vector<vector<DMatch>>>::iterator imagesMatchMap = _matches.begin(); imagesMatchMap != _matches.end(); ++imagesMatchMap)
+	{
+		for (vector<vector<DMatch>>::iterator imagesMatchList = imagesMatchMap->second.begin();
+			imagesMatchList != imagesMatchMap->second.end(); ++imagesMatchList)
+		{
+			for (vector<DMatch>::iterator imageMatchList = (*imagesMatchList).begin();
+				imageMatchList != (*imagesMatchList).end(); ++imageMatchList)
+			{
+				DMatch dMatch = *imageMatchList;
+				dMatch.imgIdx = imagesMatchMap->first;
+				MyDMatch match(dMatch);
+				match.train_kp = _db[match.imgIdx].getKeyPoint(imageMatchList->trainIdx);
+				match.query_kp = _queryImage.getKeyPoint(imageMatchList->queryIdx);
+				if (newMatches.find(match.imgIdx) != newMatches.end())
+				{
+					if (newMatches[match.imgIdx].find(match.queryIdx) != newMatches[match.imgIdx].end())
+					{
+						newMatches[match.imgIdx][match.queryIdx].push_back(match);
 					}
-					else {
-						newMatches[t.imgIdx].insert(pair<int, vector<MyDMatch>>(t.queryIdx, vector<MyDMatch>()));
-						newMatches[t.imgIdx][t.queryIdx].push_back(t);
+					else 
+					{
+						newMatches[match.imgIdx].insert(pair<int, vector<MyDMatch>>(match.queryIdx, vector<MyDMatch>()));
+						newMatches[match.imgIdx][match.queryIdx].push_back(match);
 					}
 				}
-				else {
+				else 
+				{
 					map<int, vector<MyDMatch>> tmp;
-					tmp.insert(pair<int, vector<MyDMatch>>(t.queryIdx, vector<MyDMatch>()));
-					newMatches.insert(pair<int, map<int, vector<MyDMatch>>>(t.imgIdx, tmp));
-					newMatches[t.imgIdx][t.queryIdx].push_back(t);
+					tmp.insert(pair<int, vector<MyDMatch>>(match.queryIdx, vector<MyDMatch>()));
+					newMatches.insert(pair<int, map<int, vector<MyDMatch>>>(match.imgIdx, tmp));
+					newMatches[match.imgIdx][match.queryIdx].push_back(match);
 				}
 			}
 		}
@@ -141,66 +168,79 @@ KNNRes LSHMatching<ImType>::convertDMatch(map<int, vector<vector<DMatch>>> &matc
 }
 
 template <typename ImType>
-vector<MyDMatch> LSHMatching<ImType>::convertDMatch(vector<DMatch> matches,
-	ImageContainer &train, ImageContainer &query, int train_idx){
+vector<MyDMatch> LSHMatching<ImType>::convertDMatch(vector<DMatch> _matches,
+	ImageContainer &_trainImage, ImageContainer &_queryImage, int _trainIdx)
+{
 	vector<MyDMatch> newMatches;
-	for (vector<DMatch>::iterator j = matches.begin();
-		j != matches.end(); ++j){
-		MyDMatch t(*j);
-		t.imgIdx = train_idx;
-		t.train_kp = train.getKeyPoint(j->trainIdx);
-		t.query_kp = query.getKeyPoint(j->queryIdx);
-		newMatches.push_back(t);
+
+	for (vector<DMatch>::iterator imageMatchList = _matches.begin();
+		imageMatchList != _matches.end(); ++imageMatchList)
+	{
+		MyDMatch match(*imageMatchList);
+		match.imgIdx = _trainIdx;
+		match.train_kp = _trainImage.getKeyPoint(imageMatchList->trainIdx);
+		match.query_kp = _queryImage.getKeyPoint(imageMatchList->queryIdx);
+		newMatches.push_back(match);
 	}
 
 	return newMatches;
 }
 
 template <typename ImType>
-ObjectScene LSHMatching<ImType>::buildObjSceneCorr(vector<MyDMatch> matches){
+ObjectScene LSHMatching<ImType>::buildObjSceneCorr(vector<MyDMatch> _matches)
+{
 	vector<Point2f> train, scene;
 
-	for (vector<MyDMatch>::iterator i = matches.begin();
-		i != matches.end(); ++i){
-		train.push_back(i->train_kp.pt);
-		scene.push_back(i->query_kp.pt);
+	for (vector<MyDMatch>::iterator imageMatchList = _matches.begin(); imageMatchList != _matches.end(); ++imageMatchList)
+	{
+		train.push_back(imageMatchList->train_kp.pt);
+		scene.push_back(imageMatchList->query_kp.pt);
 	}
 
 	return make_pair(train, scene);
 }
 
 template <typename ImType>
-FilteredRes LSHMatching<ImType>::filterMatchingImages(KNNRes &matches){
+FilteredRes LSHMatching<ImType>::filterMatchingImages(KNNRes &_matches)
+{
 	ImgMatches imgIndex;
 	KNNRes imgMatches;
 	vector<vector<MyDMatch>> threshmatch;
 	if (mParams.pointdiff_maxDist >= 1.0f) return make_pair(false, imgIndex);
 
-	if (!matches.empty()){
-		imgMatches = matches;
+	if (!_matches.empty())
+	{
+		imgMatches = _matches;
 
 		//Filters the feature matches and constructs the final form of the structure storing the matches
-		for (map<int, map<int, vector<MyDMatch>>>::iterator i = imgMatches.begin();
-			i != imgMatches.end(); ++i){
-			for (map<int, vector<MyDMatch>>::iterator j = i->second.begin();
-				j != i->second.end(); ++j){
-				MyDMatch match = j->second[0];
-				if (j->second.size() >= 2){
-					MyDMatch first = j->second[0];
-					MyDMatch second = j->second[1];
+		for (map<int, map<int, vector<MyDMatch>>>::iterator imagesMatchMap = imgMatches.begin();
+			imagesMatchMap != imgMatches.end(); ++imagesMatchMap)
+		{
+			for (map<int, vector<MyDMatch>>::iterator imageMatchMap = imagesMatchMap->second.begin();
+				imageMatchMap != imagesMatchMap->second.end(); ++imageMatchMap)
+			{
+				MyDMatch match = imageMatchMap->second[0];
+				if (imageMatchMap->second.size() >= 2)
+				{
+					MyDMatch first = imageMatchMap->second[0];
+					MyDMatch second = imageMatchMap->second[1];
 					double dist = first.distance / second.distance;
 					//if the distances ratio pass the test then add the match
-					if (dist <= mParams.pointdiff_maxDist){
+					if (dist <= mParams.pointdiff_maxDist)
+					{
 						match = first;
 					}
-					else {
+					else 
+					{
 						continue;
 					}
 				}
-				if (imgIndex.find(match.imgIdx) != imgIndex.end()){
+				if (imgIndex.find(match.imgIdx) != imgIndex.end())
+				{
 					imgIndex[match.imgIdx].push_back(match);
 				}
-				else {
+				else 
+				{
 					imgIndex.insert(pair<int, vector<MyDMatch>>(match.imgIdx, vector<MyDMatch>()));
 					imgIndex[match.imgIdx].push_back(match);
 				}
@@ -210,32 +250,38 @@ FilteredRes LSHMatching<ImType>::filterMatchingImages(KNNRes &matches){
 		ImgMatches geoFiltered = geometricFiltering(imgIndex, mParams.geo_k);
 
 		size_t mostBins = 0, secondMost = 0, thirdMost = 0, fourthMost = 0;
-		for (ImgMatches::iterator i = geoFiltered.begin();
-			i != geoFiltered.end(); ++i){
-			if (mostBins < i->second.size()) {
+		for (ImgMatches::iterator filteredImageMatches = geoFiltered.begin();
+			filteredImageMatches != geoFiltered.end(); ++filteredImageMatches)
+		{
+			if (mostBins < filteredImageMatches->second.size())
+			{
 				fourthMost = thirdMost;
 				thirdMost = secondMost;
 				secondMost = mostBins;
-				mostBins = i->second.size();
+				mostBins = filteredImageMatches->second.size();
 			}
-			else if (secondMost < i->second.size()) {
+			else if (secondMost < filteredImageMatches->second.size())
+			{
 				fourthMost = thirdMost;
 				thirdMost = secondMost;
-				secondMost = i->second.size();
+				secondMost = filteredImageMatches->second.size();
 			}
-			else if (thirdMost < i->second.size()){
+			else if (thirdMost < filteredImageMatches->second.size())
+			{
 				fourthMost = thirdMost;
-				thirdMost = i->second.size();
+				thirdMost = filteredImageMatches->second.size();
 			}
-			else if (fourthMost < i->second.size()){
-				fourthMost = i->second.size();
+			else if (fourthMost < filteredImageMatches->second.size())
+			{
+				fourthMost = filteredImageMatches->second.size();
 			}
 		}
 
 		ImgMatches ret;
-		for (map<int, vector<MyDMatch>>::iterator i = geoFiltered.begin();
-			i != geoFiltered.end(); ++i){
-			if (i->second.size() >= secondMost) ret.insert(*i);
+		for (map<int, vector<MyDMatch>>::iterator filteredImageMatches = geoFiltered.begin();
+			filteredImageMatches != geoFiltered.end(); ++filteredImageMatches)
+		{
+			if (filteredImageMatches->second.size() >= secondMost) ret.insert(*filteredImageMatches);
 		}
 
 		return make_pair(true, ret);
@@ -245,24 +291,27 @@ FilteredRes LSHMatching<ImType>::filterMatchingImages(KNNRes &matches){
 }
 
 template <typename ImType>
-ImgMatches LSHMatching<ImType>::geometricFiltering(ImgMatches &im, int k){
+ImgMatches LSHMatching<ImType>::geometricFiltering(ImgMatches &_imageMatches, int _k){
 
-	k = (k >= 4 ? k : 4);
-	int kClosestThresh = k*0.75;
+	_k = (_k >= 4 ? _k : 4);
+	int kClosestThresh = _k * 0.75;
 
 	ImgMatches newMatches;
 
 	map<int, double> trackerDefault;
 
-	for (int i_k = 0; i_k < k; ++i_k){
+	for (int i_k = 0; i_k < _k; ++i_k)
+	{
 		trackerDefault.insert(make_pair(i_k, 100000.0));
 	}
 
 	map<int, double> distTrakerq, distTrakerdb;
 	map<int, MyDMatch> kClosestq, kClosestdb;
 
-	for (ImgMatches::iterator i = im.begin(); i != im.end(); ++i){
-		for (vector<MyDMatch>::iterator ref = i->second.begin(); ref != i->second.end(); ++ref){
+	for (ImgMatches::iterator imageMatches = _imageMatches.begin(); imageMatches != _imageMatches.end(); ++imageMatches)
+	{
+		for (vector<MyDMatch>::iterator refernceMatches = imageMatches->second.begin(); refernceMatches != imageMatches->second.end(); ++refernceMatches)
+		{
 			kClosestdb.clear();
 			kClosestq.clear();
 			distTrakerq = trackerDefault;
@@ -272,24 +321,28 @@ ImgMatches LSHMatching<ImType>::geometricFiltering(ImgMatches &im, int k){
 			double distQ, distDB;
 
 			//Finds the k closest points to the reference query and database keypoint
-			for (vector<MyDMatch>::iterator comp = i->second.begin(); comp != i->second.end(); ++comp){
-				if (*comp == *ref) continue;
-				distQ = getDist(ref->query_kp, comp->query_kp);
-				distDB = getDist(ref->train_kp, comp->train_kp);
+			for (vector<MyDMatch>::iterator comparisonMatches = imageMatches->second.begin(); comparisonMatches != imageMatches->second.end(); ++comparisonMatches)
+			{
+				if (*comparisonMatches == *refernceMatches) continue;
+				distQ = getDist(refernceMatches->query_kp, comparisonMatches->query_kp);
+				distDB = getDist(refernceMatches->train_kp, comparisonMatches->train_kp);
 
 				/*int indexQ = findMinValueIndex(distTrakerq, distQ, k);
 				int indexDB = findMinValueIndex(distTrakerdb, distDB, k);*/
 
-				insertClosestNeighbor(k, distQ, *comp, distTrakerq, kClosestq);
-				insertClosestNeighbor(k, distDB, *comp, distTrakerdb, kClosestdb);
+				insertClosestNeighbor(_k, distQ, *comparisonMatches, distTrakerq, kClosestq);
+				insertClosestNeighbor(_k, distDB, *comparisonMatches, distTrakerdb, kClosestdb);
 			}
 
 			vector<MyDMatch> dbMatch, qMatch;
 
 			int valid_match_count = 0;
-			for (int i_kq = 0; i_kq < k; ++i_kq){
-				for (int i_kdb = 0; i_kdb < k; ++i_kdb){
-					if (kClosestq[i_kq] == kClosestdb[i_kdb]){
+			for (int i_kq = 0; i_kq < _k; ++i_kq)
+			{
+				for (int i_kdb = 0; i_kdb < _k; ++i_kdb)
+				{
+					if (kClosestq[i_kq] == kClosestdb[i_kdb])
+					{
 						++valid_match_count;
 						break;
 					}
@@ -305,13 +358,16 @@ ImgMatches LSHMatching<ImType>::geometricFiltering(ImgMatches &im, int k){
 
 			//If number of matched points that are nearest neighbors to the matched reference query 
 			//and database keypoint is >= a threshold then keep the match otherwise ignore it 
-			if (valid_match_count >= kClosestThresh){
-				if (newMatches.find(ref->imgIdx) != newMatches.end()){
-					newMatches[ref->imgIdx].push_back(*ref);
+			if (valid_match_count >= kClosestThresh)
+			{
+				if (newMatches.find(refernceMatches->imgIdx) != newMatches.end())
+				{
+					newMatches[refernceMatches->imgIdx].push_back(*refernceMatches);
 				}
-				else {
-					newMatches.insert(make_pair(ref->imgIdx, vector<MyDMatch>()));
-					newMatches[ref->imgIdx].push_back(*ref);
+				else 
+				{
+					newMatches.insert(make_pair(refernceMatches->imgIdx, vector<MyDMatch>()));
+					newMatches[refernceMatches->imgIdx].push_back(*refernceMatches);
 				}
 			}
 		}
@@ -331,7 +387,8 @@ int LSHMatching<ImType>::findMinValueIndex(map<int, double> &indexMinMap, double
 
 template <typename ImType>
 void LSHMatching<ImType>::insertClosestNeighbor(int k, double value, MyDMatch &m, map<int, double> &indexMinMap,
-	map<int, MyDMatch> &nearestNeighborMap){
+	map<int, MyDMatch> &nearestNeighborMap)
+{
 	MyDMatch tmpM;
 	double tmpV;
 	int index = 0;
@@ -369,7 +426,7 @@ double LSHMatching<ImType>::getDist(KeyPoint &kp1, KeyPoint &kp2){
 }
 
 template <typename ImType>
-int LSHMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, ImageContainer &query){
+int LSHMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &_db, ImageContainer &_queryImage){
 
 	if (matches.size() == 0) return -1;
 
@@ -388,8 +445,8 @@ int LSHMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 		int mean = sumInliers(matches[i->first], i->second.second, tmp);
 
 		if (best_fit < mean){
-			showMatches(db[i->first], query, tmp, i->second.first);
-			inspectEpipole(db[i->first], query, tmp, i->second.first);
+			showMatches(_db[i->first], _queryImage, tmp, i->second.first);
+			inspectEpipole(_db[i->first], _queryImage, tmp, i->second.first);
 			second_best = best_fit;
 			best_fit = mean;
 			img = i->first;
@@ -418,7 +475,7 @@ int LSHMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 
 #if INSPECT
 	if(img >= 0){
-		showEpilines(db[img],query,fundamentals[img].first);
+		showEpilines(_db[img],_queryImage,fundamentals[img].first);
 	}
 #endif
 	if (best_fit >= mParams.inlierThresh){
@@ -430,12 +487,12 @@ int LSHMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 	map<int, ImType> better_matches;
 	for (map<int, double>::iterator i = image_inliers.begin(); i != image_inliers.end(); ++i){
 		if (i->second >= second_best){
-			better_matches.insert(make_pair(i->first, db[i->first]));
+			better_matches.insert(make_pair(i->first, _db[i->first]));
 		}
 	}
 
 	//Rematch the images
-	ImgMatches matches2 = doubleCheckMatches(better_matches, query);
+	ImgMatches matches2 = doubleCheckMatches(better_matches, _queryImage);
 
 	//Find fundamental matricies
 	FundRes fundimentals = buildFundimentalMat(matches2);
@@ -450,13 +507,13 @@ int LSHMatching<ImType>::verify(ImgMatches &matches, ImageProvider<ImType> &db, 
 		int mean = sumInliers(matches2[i->first], i->second.second, tmp);
 
 		if (best_fit < mean){
-			showMatches(db[i->first], query, tmp, i->second.first, false);
+			showMatches(_db[i->first], _queryImage, tmp, i->second.first, false);
 			best_fit = mean;
 			img = i->first;
 		}
 	}
 	if(img >= 0){
-		showEpilines(db[img],query,fundimentals[img].first);
+		showEpilines(_db[img],_queryImage,fundimentals[img].first);
 	}
 #else
 	//Find the image with the best number of inliers
@@ -507,7 +564,7 @@ Fundimental LSHMatching<ImType>::findFund(ObjectScene train_scene){
 }
 
 template <typename ImType>
-ImgMatches LSHMatching<ImType>::doubleCheckMatches(map<int, ImType> &db, ImageContainer &query, double min_dist){
+ImgMatches LSHMatching<ImType>::doubleCheckMatches(map<int, ImType> &_db, ImageContainer &_queryImage, double min_dist){
 	BFMatcher tempm(NORM_HAMMING2, mParams.compactResults);
 
 	ImgMatches newMatches;
@@ -515,14 +572,14 @@ ImgMatches LSHMatching<ImType>::doubleCheckMatches(map<int, ImType> &db, ImageCo
 	if (!mParams.compactResults){
 		map<int, vector<vector<DMatch>>> tmpDMatch;
 
-		for (map<int, ImType>::iterator i = db.begin(); i != db.end(); ++i){
+		for (map<int, ImType>::iterator i = _db.begin(); i != _db.end(); ++i){
 			vector<vector<DMatch>> received;
-			tempm.knnMatch(query.getDescriptor(), i->second.getDescriptor(), received, mParams.k);
+			tempm.knnMatch(_queryImage.getDescriptor(), i->second.getDescriptor(), received, mParams.k);
 
 			tmpDMatch.insert(make_pair(i->first, received));
 		}
 
-		KNNRes tmpRes = convertDMatch(tmpDMatch, db, query);
+		KNNRes tmpRes = convertDMatch(tmpDMatch, _db, _queryImage);
 
 		FilteredRes tmpfRes = filterMatchingImages(tmpRes);
 		newMatches = tmpfRes.second;
@@ -531,11 +588,11 @@ ImgMatches LSHMatching<ImType>::doubleCheckMatches(map<int, ImType> &db, ImageCo
 	}
 	else {
 
-		for (map<int, ImType>::iterator i = db.begin(); i != db.end(); ++i){
+		for (map<int, ImType>::iterator i = _db.begin(); i != _db.end(); ++i){
 			vector<DMatch> received;
-			tempm.match(query.getDescriptor(), i->second.getDescriptor(), received);
+			tempm.match(_queryImage.getDescriptor(), i->second.getDescriptor(), received);
 
-			newMatches.insert(make_pair(i->first, convertDMatch(received, i->second, query, i->first)));
+			newMatches.insert(make_pair(i->first, convertDMatch(received, i->second, _queryImage, i->first)));
 		}
 
 		return geometricFiltering(newMatches, 3);
@@ -567,14 +624,14 @@ int LSHMatching<ImType>::sumInliers(vector<MyDMatch> &matches, vector<unsigned i
 	return b;
 }
 template <typename ImType>
-void LSHMatching<ImType>::showMatches(ImType &db, ImageContainer &query, vector<MyDMatch> &inliers, Mat F, bool step){
+void LSHMatching<ImType>::showMatches(ImType &_db, ImageContainer &_queryImage, vector<MyDMatch> &inliers, Mat F, bool step){
 	ObjectScene objscene = buildObjSceneCorr(inliers);
 	namedWindow("DBInliers",CV_WINDOW_KEEPRATIO);
 	namedWindow("QueryInliers",CV_WINDOW_KEEPRATIO);
 	if (!step){
-		if (db.loadImage()){
+		if (_db.loadImage()){
 			Mat r;
-			db.getMat(r);
+			_db.getMat(r);
 			KeyPoint p;
 			for (size_t i = 0; i < inliers.size(); ++i) {
 				p = inliers[i].train_kp;
@@ -589,8 +646,8 @@ void LSHMatching<ImType>::showMatches(ImType &db, ImageContainer &query, vector<
 			computeCorrespondEpilines(objscene.second, 2, F, eplines);
 			for (vector<Vec3f>::iterator t = eplines.begin(); t != eplines.end(); ++t){
 				float y1 = (-1 * ((*t)[2] / (*t)[1]));
-				float y2 = (-1 * ((*t)[0] / (*t)[1])*db.imageSize().width) - ((*t)[2] / (*t)[1]);
-				Point p1(0, y1), p2(db.imageSize().width, y2);
+				float y2 = (-1 * ((*t)[0] / (*t)[1])*_db.imageSize().width) - ((*t)[2] / (*t)[1]);
+				Point p1(0, y1), p2(_db.imageSize().width, y2);
 				line(r, p1, p2, Scalar::all(-1));
 			}
 			
@@ -599,9 +656,9 @@ void LSHMatching<ImType>::showMatches(ImType &db, ImageContainer &query, vector<
 		else {
 			cout << "No DB image to show" << endl;
 		}
-		if (query.hasImage()){
+		if (_queryImage.hasImage()){
 			Mat r;
-			query.getMat(r);
+			_queryImage.getMat(r);
 			KeyPoint p;
 			for (size_t i = 0; i < inliers.size(); ++i) {
 				p = inliers[i].query_kp;
@@ -616,8 +673,8 @@ void LSHMatching<ImType>::showMatches(ImType &db, ImageContainer &query, vector<
 			computeCorrespondEpilines(objscene.first, 1, F, eplines);
 			for (vector<Vec3f>::iterator t = eplines.begin(); t != eplines.end(); ++t){
 				float y1 = (-1 * ((*t)[2] / (*t)[1]));
-				float y2 = (-1 * ((*t)[0] / (*t)[1])*query.imageSize().width) - ((*t)[2] / (*t)[1]);
-				Point p1(0, y1), p2(query.imageSize().width, y2);
+				float y2 = (-1 * ((*t)[0] / (*t)[1])*_queryImage.imageSize().width) - ((*t)[2] / (*t)[1]);
+				Point p1(0, y1), p2(_queryImage.imageSize().width, y2);
 				line(r, p1, p2, Scalar::all(-1));
 			}
 			imshow("QueryInliers", r);
@@ -626,15 +683,15 @@ void LSHMatching<ImType>::showMatches(ImType &db, ImageContainer &query, vector<
 			cout << "No Query Image to show" << endl;
 		}
 	}
-	else if (query.hasImage() && db.loadImage()) {
+	else if (_queryImage.hasImage() && _db.loadImage()) {
 		Mat q, d;
 
 		vector<Vec3f> eplinesdb, eplinesq;
 		computeCorrespondEpilines(objscene.first, 1, F, eplinesq);
 		computeCorrespondEpilines(objscene.second, 2, F, eplinesdb);
 		for (size_t t = 0; t < eplinesdb.size(); ++t){
-			db.getMat(d);
-			query.getMat(q);
+			_db.getMat(d);
+			_queryImage.getMat(q);
 
 			KeyPoint q_p = inliers[t].query_kp;
 			circle(q, q_p.pt, 2, Scalar(0, 0, 255), -1);
@@ -651,12 +708,12 @@ void LSHMatching<ImType>::showMatches(ImType &db, ImageContainer &query, vector<
 				Scalar(255, 13, 255));
 
 			float q_y1 = (-1 * (eplinesq[t][2] / eplinesq[t][1]));
-			float q_y2 = (-1 * (eplinesq[t][0] / eplinesq[t][1])*query.imageSize().width) - (eplinesq[t][2] / eplinesq[t][1]);
-			Point q_p1(0, q_y1), q_p2(query.imageSize().width, q_y2);
+			float q_y2 = (-1 * (eplinesq[t][0] / eplinesq[t][1])*_queryImage.imageSize().width) - (eplinesq[t][2] / eplinesq[t][1]);
+			Point q_p1(0, q_y1), q_p2(_queryImage.imageSize().width, q_y2);
 			line(q, q_p1, q_p2, Scalar(0, 100, 255));
 
 			float db_y1 = (-1 * (eplinesdb[t][2] / eplinesdb[t][1]));
-			float db_y2 = (-1 * (eplinesdb[t][0] / eplinesdb[t][1])*db.imageSize().width) - (eplinesdb[t][2] / eplinesdb[t][1]);
+			float db_y2 = (-1 * (eplinesdb[t][0] / eplinesdb[t][1])*_db.imageSize().width) - (eplinesdb[t][2] / eplinesdb[t][1]);
 			Point db_p1(0, db_y1), db_p2(db.imageSize().width, db_y2);
 			line(d, db_p1, db_p2, Scalar(0, 100, 255));
 
@@ -669,14 +726,14 @@ void LSHMatching<ImType>::showMatches(ImType &db, ImageContainer &query, vector<
 	waitKey();
 }
 template <typename ImType>
-void LSHMatching<ImType>::inspectEpipole(ImType &db, ImageContainer &query, vector<MyDMatch> &inliers, Mat F){
+void LSHMatching<ImType>::inspectEpipole(ImType &_db, ImageContainer &_queryImage, vector<MyDMatch> &inliers, Mat F){
 	ObjectScene objscene = buildObjSceneCorr(inliers);
 	SVD svd(F, SVD::FULL_UV);
 	namedWindow("DBInliers",CV_WINDOW_KEEPRATIO);
 	namedWindow("QueryInliers",CV_WINDOW_KEEPRATIO);
-	if (db.loadImage()){
+	if (_db.loadImage()){
 		Mat r;
-		db.getMat(r);
+		_db.getMat(r);
 		KeyPoint p;
 		for (size_t i = 0; i < inliers.size(); ++i) {
 			p = inliers[i].train_kp;
@@ -691,8 +748,8 @@ void LSHMatching<ImType>::inspectEpipole(ImType &db, ImageContainer &query, vect
 		computeCorrespondEpilines(objscene.second, 2, F, eplines);
 		for (vector<Vec3f>::iterator t = eplines.begin(); t != eplines.end(); ++t){
 			float y1 = (-1 * ((*t)[2] / (*t)[1]));
-			float y2 = (-1 * ((*t)[0] / (*t)[1])*db.imageSize().width) - ((*t)[2] / (*t)[1]);
-			Point p1(0, y1), p2(db.imageSize().width, y2);
+			float y2 = (-1 * ((*t)[0] / (*t)[1])*_db.imageSize().width) - ((*t)[2] / (*t)[1]);
+			Point p1(0, y1), p2(_db.imageSize().width, y2);
 			line(r, p1, p2, Scalar::all(-1));
 		}
 		imshow("DBInliers", r);
@@ -700,9 +757,9 @@ void LSHMatching<ImType>::inspectEpipole(ImType &db, ImageContainer &query, vect
 	else {
 		cout << "No DB image to show" << endl;
 	}
-	if (query.hasImage()){
+	if (_queryImage.hasImage()){
 		Mat r;
-		query.getMat(r);
+		_queryImage.getMat(r);
 		KeyPoint p;
 		for (size_t i = 0; i < inliers.size(); ++i) {
 			p = inliers[i].query_kp;
@@ -717,8 +774,8 @@ void LSHMatching<ImType>::inspectEpipole(ImType &db, ImageContainer &query, vect
 		computeCorrespondEpilines(objscene.first, 1, F, eplines);
 		for (vector<Vec3f>::iterator t = eplines.begin(); t != eplines.end(); ++t){
 			float y1 = (-1 * ((*t)[2] / (*t)[1]));
-			float y2 = (-1 * ((*t)[0] / (*t)[1])*query.imageSize().width) - ((*t)[2] / (*t)[1]);
-			Point p1(0, y1), p2(query.imageSize().width, y2);
+			float y2 = (-1 * ((*t)[0] / (*t)[1])*_queryImage.imageSize().width) - ((*t)[2] / (*t)[1]);
+			Point p1(0, y1), p2(_queryImage.imageSize().width, y2);
 			line(r, p1, p2, Scalar::all(-1));
 		}
 		Mat ep = svd.u.col(2) / svd.u.at<double>(2, 2);
@@ -734,18 +791,18 @@ void LSHMatching<ImType>::inspectEpipole(ImType &db, ImageContainer &query, vect
 
 }
 template <typename ImType>
-void LSHMatching<ImType>::showEpilines(ImType &db, ImageContainer &query, Mat F){
-	if(query.hasImage() && db.loadImage()){
+void LSHMatching<ImType>::showEpilines(ImType &_db, ImageContainer &_queryImage, Mat F){
+	if(_queryImage.hasImage() && _db.loadImage()){
 		namedWindow("DBInliers",CV_WINDOW_KEEPRATIO);
 		namedWindow("QueryInliers",CV_WINDOW_KEEPRATIO);
 		Mat q, d,d2;
-		db.getMat(d2);
+		_db.getMat(d2);
 		vector<Point2f> q_points;
-		for(size_t i = 0; i < query.getKeyPoints().size(); ++i){
-			q_points.push_back(query.getKeyPoint(i).pt);
+		for(size_t i = 0; i < _queryImage.getKeyPoints().size(); ++i){
+			q_points.push_back(_queryImage.getKeyPoint(i).pt);
 		}
-		for(size_t i = 0; i < db.getKeyPoints().size(); ++i){
-			KeyPoint d_p = db.getKeyPoint(i);
+		for(size_t i = 0; i < _db.getKeyPoints().size(); ++i){
+			KeyPoint d_p = _db.getKeyPoint(i);
 			circle(d2, d_p.pt, 2, Scalar(255, 0, 0), -1);
 			/*char d_buff[33];
 			itoa(i, d_buff, 10);
@@ -758,9 +815,9 @@ void LSHMatching<ImType>::showEpilines(ImType &db, ImageContainer &query, Mat F)
 		computeCorrespondEpilines(q_points, 2, F, eplinesdb);
 		for (size_t t = 0; t < eplinesdb.size(); ++t){
 			d2.copyTo(d);
-			query.getMat(q);
+			_queryImage.getMat(q);
 
-			KeyPoint q_p = query.getKeyPoint(t);
+			KeyPoint q_p = _queryImage.getKeyPoint(t);
 			circle(q, q_p.pt, 2, Scalar(0, 0, 255), -1);
 			char q_buff[33];
 			itoa(t, q_buff, 10);

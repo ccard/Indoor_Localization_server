@@ -45,8 +45,8 @@ public:
 		}
 	}
 
-	void operator<< (ImageProvider<ImType>& images){
-		vector<ImType> imgs = images.getImages();
+	void operator<< (ImageProvider<ImType>& _images){
+		vector<ImType> imgs = _images.getImages();
 		vector<Mat> descriptors;
 
 		for(vector<ImType>::iterator i = imgs.begin(); i != imgs.end(); ++i){
@@ -58,9 +58,10 @@ public:
 		lshMatcher.add(descriptors);
 	}
 
-	int find(ImageContainer& query, ImageProvider<ImType> &db);
+	int find(ImageContainer &_queryImage, ImageProvider<ImType> &_db);
 
-	void train(){
+	void train()
+	{
 		lshMatcher.train();	
 	}
 
@@ -82,8 +83,8 @@ private:
 	*
 	* @return: true if it found matches
 	*/
-	bool knnMatch(ImageContainer &query, ImageProvider<ImType> &db,
-		KNNRes &match, vector<Mat> &masks = vector<Mat>());
+	bool knnMatch(ImageContainer &query, ImageProvider<ImType> &_db,
+		KNNRes &_matches, vector<Mat> &_masks = vector<Mat>());
 
 
 	/**
@@ -96,17 +97,17 @@ private:
 	*
 	* @return: the matches vector in the form of MyDMatch
 	*/
-	KNNRes convertDMatch(vector<vector<DMatch>> matches,
-		ImageProvider<ImType> &db, ImageContainer &query);
+	KNNRes convertDMatch(vector<vector<DMatch>> _matches,
+		ImageProvider<ImType> &_db, ImageContainer &_queryImage);
 
-	KNNRes convertDMatch(vector<vector<DMatch>> matches,
-		map<int, ImType> &db, map<int, int> tmpdb_to_db, ImageContainer &query);
+	KNNRes convertDMatch(vector<vector<DMatch>> _matches,
+		map<int, ImType> &_db, map<int, int> _tmpDBToDB, ImageContainer &_queryImage);
 
-	KNNRes convertDMatch(map<int, vector<vector<DMatch>>> &matches,
-		map<int, ImType> &db, ImageContainer &query);
+	KNNRes convertDMatch(map<int, vector<vector<DMatch>>> &_matches,
+		map<int, ImType> &_db, ImageContainer &_queryImage);
 
-	vector<MyDMatch> convertDMatch(vector<DMatch> matches,
-		ImageContainer &train, ImageContainer &query, int train_idx);
+	vector<MyDMatch> convertDMatch(vector<DMatch> _matches,
+		ImageContainer &_trainImage, ImageContainer &_queryImage, int _trainIdx);
 
 	/**
 	* This method builds the object and scene points and returns them so that
@@ -117,7 +118,7 @@ private:
 	* @return: a pair of vectors first being the training keypoints and the second being
 	* the query key points
 	*/
-	ObjectScene buildObjSceneCorr(vector<MyDMatch> matches);
+	ObjectScene buildObjSceneCorr(vector<MyDMatch> _matches);
 
 	/**
 	* This method compares the image to the database given a max distance threshold
@@ -131,7 +132,7 @@ private:
 	* @return: the if it has all data it needs and the data set image index as traind 
 	*  on by lsh
 	*/
-	FilteredRes filterMatchingImages(KNNRes &matches);
+	FilteredRes filterMatchingImages(KNNRes &_matches);
 
 	/**
 	 * Goes through all the images and their feature matches and ensures that each match is 
@@ -144,7 +145,7 @@ private:
 	 * 
 	 * @return: the map database image indecies to the list of matches that satisfies the geometric constraints
 	 */
-	ImgMatches geometricFiltering(ImgMatches &im, int k);
+	ImgMatches geometricFiltering(ImgMatches &_imageMatches, int _k);
 
 	/**
 	 * Finds the first index in the map whos value is bigger than the passed in value
@@ -156,7 +157,7 @@ private:
 	 * @return: the index in the map the first index in the map whos value is bigger than 
 	 *          the passed in value, otherwise returns ERROR
 	 */
-	int findMinValueIndex(map<int, double> &indexMinMap, double value, int k);
+	int findMinValueIndex(map<int, double> &_indexMinMap, double _value, int _k);
 
 	/**
 	 * Inserts the value and MyDMatch objects into their respective arrays and slides the
@@ -170,8 +171,8 @@ private:
 	 * @param: map whos keys go from 0-(k-1) where the 0 index has the dmatch object 
 	 *         corresponding to the smallest value in indexMinMap
 	 */
-	void insertClosestNeighbor(int k, double value, MyDMatch &m, map<int, double> &indexMinMap,
-		map<int, MyDMatch> &nearestNeighborMap);
+	void insertClosestNeighbor(int _k, double _value, MyDMatch &_match, map<int, double> &_indexMinMap,
+		map<int, MyDMatch> &_nearestNeighborMap);
 
 	/**
 	 * Calculates the euclidean distance between two keypoints
@@ -181,7 +182,7 @@ private:
 	 *
 	 * @return: the euclidean distance between the two keypoints
 	 */
-	double getDist(KeyPoint &kp1, KeyPoint &kp2);
+	double getDist(KeyPoint &_kp1, KeyPoint &_kp2);
 
 	/**
 	* This method verifies the filtered keypoints are indeed a good match i.e. they form
@@ -199,7 +200,7 @@ private:
 	* @return: pair of boolean and int boolean is true and int contains the image index in the data base
 	* if no good match found then boolean is false and int is negative
 	*/
-	int verify(ImgMatches &matches, ImageProvider<ImType> &db, ImageContainer &query);
+	int verify(ImgMatches &_matches, ImageProvider<ImType> &_db, ImageContainer &_queryImage);
 
 	/**
 	* This Function builds the fundimental matricies that relate one image to another
@@ -211,7 +212,7 @@ private:
 	* @return: a map of ints to pairs, first of the pairs is the fundimental matrix the second is
 	* the inliers 1 for inlier 0 for not
 	*/
-FundRes buildFundimentalMat(ImgMatches matches);
+FundRes buildFundimentalMat(ImgMatches _matches);
 
 	/**
 	* Finds the fundimental matrix and returns it along with the inliers
@@ -220,7 +221,7 @@ FundRes buildFundimentalMat(ImgMatches matches);
 	*
 	* @return: par from thr fund matrix to the inliers
 	*/
-Fundimental findFund(ObjectScene train_scene);
+Fundimental findFund(ObjectScene _trainScene);
 
 	/**
 	* This function rematches the points to ensure a better fit then what lsh might return
@@ -231,17 +232,17 @@ Fundimental findFund(ObjectScene train_scene);
 	* 
 	* @return: vector of mydmathc objects
 	*/
-ImgMatches doubleCheckMatches(map<int, ImType> &db, ImageContainer &query, double min_dist = 0.2);
+ImgMatches doubleCheckMatches(map<int, ImType> &_db, ImageContainer &_queryImage, double _minDist = 0.2);
 
 	/**
 	 * Sums the inliers 
 	 */
-	int sumInliers(vector<unsigned int> &inliers);
+	int sumInliers(vector<unsigned int> &_inliers);
 
 #if INSPECT
-	int sumInliers(vector<MyDMatch> &matches, vector<unsigned int> &inliers, vector<MyDMatch> &fittingMatches);
-	void showMatches(ImType &db, ImageContainer &query, vector<MyDMatch> &inliers, Mat F,bool step = false);
-	void inspectEpipole(ImType &db, ImageContainer &query, vector<MyDMatch> &inliers, Mat F);
-	void showEpilines(ImType &db, ImageContainer &query, Mat F);
+	int sumInliers(vector<MyDMatch> &_matches, vector<unsigned int> &_inliers, vector<MyDMatch> &_fittingMatches);
+	void showMatches(ImType &_db, ImageContainer &_queryImage, vector<MyDMatch> &_inliers, Mat _F, bool _step = false);
+	void inspectEpipole(ImType &_db, ImageContainer &_queryImage, vector<MyDMatch> &_inliers, Mat _F);
+	void showEpilines(ImType &_db, ImageContainer &_queryImage, Mat _F);
 #endif
 };
